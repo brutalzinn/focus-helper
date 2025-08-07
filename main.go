@@ -19,12 +19,18 @@ import (
 
 var appConfig config.Config
 var db *sql.DB
-var lastActivityTime time.Time
-var continuousUsageStartTime time.Time
 var activityMonitor *activity.Monitor
+var atcPromptManager *integrations.PromptManager
+
+type AppState struct {
+	lastActivityTime         time.Time
+	continuousUsageStartTime time.Time
+	warnedThresholds         map[time.Duration]bool
+	currentHyperfocusState   *config.HyperfocusState
+}
 
 func main() {
-	appConfig = config.LoadConfig(true)
+	appConfig = config.Init(false)
 
 	setupLogger()
 
@@ -42,19 +48,23 @@ func main() {
 
 	audio.InitSpeaker()
 	activityMonitor = activity.NewMonitor()
+	atcPromptManager = integrations.NewATCPromptManager()
 
-	now := time.Now()
-	lastActivityTime = now
-	continuousUsageStartTime = now
+	state := &AppState{
+		lastActivityTime:         time.Now(),
+		continuousUsageStartTime: time.Now(),
+		warnedThresholds:         make(map[time.Duration]bool),
+		currentHyperfocusState:   nil,
+	}
 
-	go monitorActivityLoop()
+	go monitorActivityLoop(state)
 	if appConfig.WellbeingQuestionsEnabled {
 		go schedulerLoop()
 	} else {
 		log.Println("Questões de bem estar desativadas.")
 	}
 
-	audio.PlayRadioSimulation("Bem-vindo ao Focus Helper. Estamos prontos para ajudar você a manter o foco e o bem-estar.", 1, 1)
+	audio.PlayRadioSimulation("Bem-vindo ao Focus Helper. Estamos prontos para ajudar você a manter o foco e o bem-estar.", 1, 1, 1, "radio_static.wav")
 	log.Println("Focus Helper está rodando em background.")
 	select {}
 }
@@ -68,43 +78,45 @@ func setupLogger() {
 	log.SetOutput(multiWriter)
 }
 
-func monitorActivityLoop() {
-	ticker := time.NewTicker(appConfig.ActivityCheckRate)
+func monitorActivityLoop(state *AppState) {
+	ticker := time.NewTicker(config.AppConfig.ActivityCheckRate)
 	defer ticker.Stop()
-	warnedThresholds := make(map[time.Duration]bool)
-
 	for range ticker.C {
+		isIdle := time.Since(state.lastActivityTime) > config.AppConfig.IdleTimeout
 		if activityMonitor.HasActivity() {
-			if time.Since(lastActivityTime) > appConfig.IdleTimeout {
-				log.Println("Usuário retornou da ociosidade. Reiniciando contadores.")
-				continuousUsageStartTime = time.Now()
-				warnedThresholds = make(map[time.Duration]bool)
+			if isIdle {
+				resetState(state)
 			}
-			lastActivityTime = time.Now()
+			state.lastActivityTime = time.Now()
 		}
-
-		if time.Since(lastActivityTime) > appConfig.IdleTimeout {
+		if isIdle {
 			continue
 		}
-		usageDuration := time.Since(continuousUsageStartTime)
-		for _, level := range appConfig.AlertLevels {
-			if level.Enabled && usageDuration > level.Threshold && !warnedThresholds[level.Threshold] {
-				go actions.Execute(level, appConfig)
-				warnedThresholds[level.Threshold] = true
+		usageDuration := time.Since(state.continuousUsageStartTime)
+		for _, level := range config.AppConfig.AlertLevels {
+			if level.Enabled && usageDuration >= level.Threshold && !state.warnedThresholds[level.Threshold] {
+				log.Printf("Alerta de hiperfoco acionado: %s (duração: %v)", level.Level, usageDuration)
+				if state.currentHyperfocusState == nil || state.currentHyperfocusState.Level != level.Level {
+					state.currentHyperfocusState = &config.HyperfocusState{
+						Level:     level.Level,
+						StartTime: time.Now(),
+					}
+				}
+				go actions.Execute(level, state.currentHyperfocusState)
+				state.warnedThresholds[level.Threshold] = true
 			}
 		}
 	}
 }
 
 func schedulerLoop() {
-	randomDuration := time.Duration(rand.Int63n(int64(appConfig.MaxRandomQuestion-appConfig.MinRandomQuestion))) + appConfig.MinRandomQuestion
+	randomDuration := time.Duration(rand.Int63n(int64(config.AppConfig.MaxRandomQuestion-config.AppConfig.MinRandomQuestion))) + config.AppConfig.MinRandomQuestion
 	ticker := time.NewTicker(randomDuration)
 	log.Printf("Próxima pergunta de bem-estar agendada em %v.", randomDuration.Round(time.Second))
 	defer ticker.Stop()
-
 	for range ticker.C {
 		askWellbeingQuestion()
-		newDuration := time.Duration(rand.Int63n(int64(appConfig.MaxRandomQuestion-appConfig.MinRandomQuestion))) + appConfig.MinRandomQuestion
+		newDuration := time.Duration(rand.Int63n(int64(config.AppConfig.MaxRandomQuestion-config.AppConfig.MinRandomQuestion))) + config.AppConfig.MinRandomQuestion
 		ticker.Reset(newDuration)
 		log.Printf("Próxima pergunta de bem-estar reagendada em %v.", newDuration.Round(time.Second))
 	}
@@ -112,13 +124,12 @@ func schedulerLoop() {
 
 func askWellbeingQuestion() {
 	go func() {
-		prompt := "Você é um assistente de bem-estar. Gere UMA ÚNICA pergunta curta de confirmação para um usuário de computador sobre pausas ou saúde (postura, água, olhos). Sem aspas."
-		questionText, err := integrations.GenerateTextWithLlama(appConfig.LlamaModel, prompt)
+		finalPrompt := atcPromptManager.FormatPrompt("Como você está se sentindo agora? Você gostaria de fazer uma pausa para o bem-estar?")
+		questionText, err := integrations.GenerateTextWithLlama(config.AppConfig.Llama.Model, finalPrompt)
 		if err != nil {
 			log.Printf("Erro ao gerar pergunta com Llama, usando fallback: %v", err)
 			questionText = "Que tal uma pausa para um copo d'água?"
 		}
-
 		answeredYes := notifications.ShowQuestionPopup("Pausa para o Bem-estar", questionText)
 		answer := "Não"
 		if answeredYes {
@@ -126,4 +137,20 @@ func askWellbeingQuestion() {
 		}
 		database.LogWellbeingCheck(db, questionText, answer)
 	}()
+}
+
+func resetState(state *AppState) {
+	log.Println("Usuário retornou da ociosidade. Reiniciando contadores.")
+
+	now := time.Now()
+	state.continuousUsageStartTime = now
+	state.lastActivityTime = now
+	state.warnedThresholds = make(map[time.Duration]bool)
+	state.currentHyperfocusState = nil
+	response, err := integrations.GenerateTextWithLlama(config.AppConfig.Llama.Model, "Informe ao Alfa-Um que a torre está feliz em vê-lo de volta e que ele pode continuar sua missão com foco renovado.")
+	if err != nil {
+		log.Printf("Erro ao gerar resposta com Llama: %v", err)
+		response = "Usuário ativo novamente."
+	}
+	go audio.PlayRadioSimulation(response, 1, 1, 1, "radio_static.wav")
 }

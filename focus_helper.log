@@ -1,0 +1,9 @@
+2025/08/07 19:16:43 --- Iniciando o Focus Helper ---
+2025/08/07 19:16:43 Banco de dados inicializado com sucesso.
+2025/08/07 19:16:43 Questões de bem estar desativadas.
+2025/08/07 19:16:44 Executando comando FFmpeg para criar fundo com loop: /usr/bin/ffmpeg -y -stream_loop -1 -i assets/radio_static.wav -t 6.142 -ar 22050 -ac 1 assets/temp_background_cropped.wav
+2025/08/07 19:16:44 Using Linux 'virtual sink' method for priority audio.
+2025/08/07 19:16:45 Playing sound on isolated sink 'focus_priority_sink' with multiplier 1.00
+2025/08/07 19:16:51 Unloading virtual sink: focus_priority_sink
+2025/08/07 19:16:51 Limpando arquivos de áudio temporários...
+2025/08/07 19:16:51 Focus Helper está rodando em background.

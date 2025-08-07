@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-func TriggerHomeAssistant(webhookURL string, payload string) {
+func TriggerHomeAssistant(webhookURL string, payload string) error {
 	if webhookURL == "" || webhookURL == "http://SEU_HOME_ASSISTANT_IP:8123/api/webhook/SEU_WEBHOOK_ID" {
 		log.Println("URL do Home Assistant não configurada. Pulando webhook.")
-		return
+		return nil
 	}
 	req, _ := http.NewRequest("POST", webhookURL, bytes.NewBuffer([]byte(payload)))
 	req.Header.Set("Content-Type", "application/json")
@@ -18,8 +18,10 @@ func TriggerHomeAssistant(webhookURL string, payload string) {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Erro ao enviar webhook para Home Assistant: %v", err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 	log.Printf("Webhook enviado para Home Assistant. Status: %s", resp.Status)
+
+	return nil
 }
