@@ -1,2 +1,12 @@
 /.venv
 /voices
+
+**/temp_*.wav
+**/final_*.wav
+**/sox-*.wav
+**/ffmpeg-*.wav
+**/llama-*.txt
+/logs
+*.db
+*.sqlite
+*.log
