@@ -30,9 +30,8 @@ func (a *ATCAction) Execute(alert config.AlertLevel) error {
 
 	return audio.PlayRadioSimulation(
 		alertText,
-		a.BackgroundVolume,
 		a.VoiceVolume,
-		alert.Multiplier,
+		a.BackgroundVolume,
 		a.BackgroundFile,
 	)
 }

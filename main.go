@@ -66,7 +66,7 @@ func main() {
 		log.Println("Questões de bem estar desativadas.")
 	}
 
-	audio.PlayRadioSimulation("Bem-vindo ao Focus Helper. Estamos prontos para ajudar você a manter o foco e o bem-estar.", 0.5, 1, 1, "radio_static.wav")
+	audio.PlayRadioSimulation("Bem-vindo ao Focus Helper. Estamos prontos para ajudar você a manter o foco e o bem-estar.", 1.0, 0.5, "radio_static.wav")
 	log.Println("Focus Helper está rodando em background.")
 	select {}
 }
@@ -132,7 +132,7 @@ func askWellbeingQuestion() {
 			log.Printf("Erro ao gerar pergunta com Llama, usando fallback: %v", err)
 			questionText = "Que tal uma pausa para um copo d'água?"
 		}
-		audio.PlayRadioSimulation(questionText, 1, 1, 1, "radio_static.wav")
+		audio.PlayRadioSimulation(questionText, 1, 1, "radio_static.wav")
 		answeredYes := notifications.ShowQuestionPopup("Pausa para o Bem-estar", questionText)
 		answer := "Não"
 		if answeredYes {
@@ -157,5 +157,5 @@ func resetState(state *AppState) {
 		log.Printf("Erro ao gerar resposta com Llama: %v", err)
 		response = "Usuário ativo novamente."
 	}
-	go audio.PlayRadioSimulation(response, 1, 1, 1, "radio_static.wav")
+	go audio.PlayRadioSimulation(response, 1.0, 0.5, "radio_static.wav")
 }

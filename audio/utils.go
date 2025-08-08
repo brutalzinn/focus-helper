@@ -80,7 +80,7 @@ func playFileOnSink(filename string, multiplier float64, sink string) error {
 	return runCommand(playCmd)
 }
 
-func playSoundAmplified(filename string, multiplier float64) error {
+func playSoundAmplified(filename string, volume float64) error {
 	var lowerVolumeCmd, restoreVolumeCmd *exec.Cmd
 	var originalVolume string
 	var err error
@@ -103,7 +103,7 @@ func playSoundAmplified(filename string, multiplier float64) error {
 		sink, err := getDefaultSinkName()
 		if err != nil {
 			log.Println("Could not get default sink, skipping volume ducking.")
-			return playFile(filename, multiplier)
+			return playFile(filename, volume)
 		}
 		originalVolume, err = getSystemVolumeLinux()
 		if err != nil {
@@ -126,11 +126,11 @@ func playSoundAmplified(filename string, multiplier float64) error {
 		runCommand(restoreVolumeCmd)
 	}()
 
-	log.Printf("Playing amplified sound with multiplier %.2f", multiplier)
-	return playFile(filename, multiplier)
+	log.Printf("Playing amplified sound with multiplier %.2f", volume)
+	return playFile(filename, volume)
 }
 
-func playSoundIsolatedLinux(filename string, multiplier float64) error {
+func playSoundIsolatedLinux(filename string, volume float64) error {
 	originalVolume, err := getSystemVolumeLinux()
 	if err != nil {
 		originalVolume = "100%"
@@ -148,7 +148,7 @@ func playSoundIsolatedLinux(filename string, multiplier float64) error {
 		}
 	}()
 
-	return playSoundAmplified(filename, multiplier)
+	return playSoundAmplified(filename, volume)
 }
 
 func runCommand(cmd *exec.Cmd) error {

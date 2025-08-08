@@ -38,6 +38,10 @@ func PlaySound(filename string, volume float64) error {
 	if !IsReady() {
 		return nil
 	}
+	if volume <= 0 {
+		log.Println("PlayRadioSimulation Volume deve ser maior que zero, usando volume padrão de 1.0")
+		volume = 1.0
+	}
 	staticAudio := getAssetPath("assets", filename)
 	if err := playPrioritySound(staticAudio, volume); err != nil {
 		log.Printf("Error playing final audio with ducking: %v", err)
@@ -46,11 +50,15 @@ func PlaySound(filename string, volume float64) error {
 	return nil
 }
 
-func PlayRadioSimulation(message string, backgroundVolume, voiceVolume, playbackMultiplier float64, backgroundSound string) error {
+func PlayRadioSimulation(message string, voiceVolume, backgroundVolume float64, backgroundSound string) error {
 	audioMutex.Lock()
 	if !IsReady() {
 		log.Println("Sistema de áudio não inicializado, pulando simulação de rádio.")
 		return nil
+	}
+
+	if voiceVolume <= 0 {
+		voiceVolume = 1.0
 	}
 
 	modelPath := getAssetPath("voices", "pt_BR-cadu-medium.onnx")
@@ -84,7 +92,11 @@ func PlayRadioSimulation(message string, backgroundVolume, voiceVolume, playback
 
 	if backgroundSound == "" {
 		log.Println("Nenhum som de fundo especificado, tocando apenas a voz ATC.")
-		return playPrioritySound(tempVoiceFiltered, playbackMultiplier)
+		return playPrioritySound(tempVoiceFiltered, voiceVolume)
+	}
+
+	if backgroundVolume <= 0 {
+		backgroundVolume = 0.5
 	}
 
 	duration, err := getAudioDuration(tempVoiceFiltered)
@@ -116,21 +128,21 @@ func PlayRadioSimulation(message string, backgroundVolume, voiceVolume, playback
 		return fmt.Errorf("erro ao mixar áudio com sox: %w", err)
 	}
 
-	if err := playPrioritySound(finalOutput, playbackMultiplier); err != nil {
+	if err := playPrioritySound(finalOutput, 1.0); err != nil {
 		log.Printf("Error playing final audio with ducking: %v", err)
 	}
 	return nil
 }
 
-func playPrioritySound(filename string, multiplier float64) error {
+func playPrioritySound(filename string, volume float64) error {
 	switch runtime.GOOS {
 	case "linux":
 		log.Println("Using Linux 'virtual sink' method for priority audio.")
-		return playSoundIsolatedLinux(filename, multiplier)
+		return playSoundIsolatedLinux(filename, volume)
 
 	case "darwin", "windows":
 		log.Printf("Using '%s' 'amplify and lower' method for priority audio.", runtime.GOOS)
-		return playSoundAmplified(filename, multiplier)
+		return playSoundAmplified(filename, volume)
 
 	default:
 		log.Printf("Priority audio not supported on %s. Playing normally.", runtime.GOOS)
