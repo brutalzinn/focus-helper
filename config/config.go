@@ -109,7 +109,7 @@ func loadProdConfig() Config {
 				Threshold: 45 * time.Minute,
 				Actions: []ActionConfig{
 					{Type: ActionSound, SoundFile: "alert_level_1.mp3"},
-					{Type: ActionATC, VoiceVolume: 1.0, BackgroundVolume: 0.2, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."}, // <-- Adicionado VoiceVolume
+					{Type: ActionATC, VoiceVolume: 1.0, BackgroundVolume: 0.3, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."},
 				},
 			},
 			{
@@ -119,7 +119,7 @@ func loadProdConfig() Config {
 				Multiplier: 1.5,
 				Actions: []ActionConfig{
 					{Type: ActionSound, SoundFile: "autopilot.mp3"},
-					{Type: ActionATC, VoiceVolume: 1.2, BackgroundVolume: 0.3, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."}, // <-- Adicionado VoiceVolume
+					{Type: ActionATC, VoiceVolume: 1.0, BackgroundVolume: 0.4, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."},
 				},
 			},
 			{
@@ -130,7 +130,7 @@ func loadProdConfig() Config {
 				Actions: []ActionConfig{
 					{Type: ActionSound, SoundFile: "alert_level_3.mp3"},
 					{Type: ActionPopup, PopupTitle: "Alerta de Foco Intenso", PopupMessage: "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."},
-					{Type: ActionATC, VoiceVolume: 1.5, BackgroundVolume: 0.6, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."}, // <-- Adicionado VoiceVolume
+					{Type: ActionATC, VoiceVolume: 1.0, BackgroundVolume: 0.5, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."},
 				},
 			},
 			{
@@ -139,7 +139,7 @@ func loadProdConfig() Config {
 				Threshold:  4 * time.Hour,
 				Multiplier: 5.0,
 				Actions: []ActionConfig{
-					{Type: ActionATC, VoiceVolume: 2.0, BackgroundVolume: 1.0, BackgroundFile: "radio_static.wav", LlamaPrompt: "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."}, // <-- Adicionado VoiceVolume
+					{Type: ActionATC, VoiceVolume: 1.0, BackgroundVolume: 1.0, BackgroundFile: "radio_static.wav", LlamaPrompt: "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."}, // <-- Adicionado VoiceVolume
 				},
 			},
 		},
