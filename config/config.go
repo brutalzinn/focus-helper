@@ -49,9 +49,9 @@ type HomeAssistantConfig struct {
 }
 
 type HyperfocusState struct {
-	Level     string
-	StartTime time.Time
-	EndTime   time.Time
+	Level     string    /// determina o nivel do hiperfoco
+	StartTime time.Time /// hora de inicio do hiperfoco
+	EndTime   time.Time /// hora de fim do hiperfoco
 }
 type MiscConfig struct {
 	WarnedThresholds       map[time.Duration]bool
@@ -90,15 +90,15 @@ func Init(debugMode bool) Config {
 
 func loadProdConfig() Config {
 	return Config{
-		DEBUG:             false,
-		IdleTimeout:       3 * time.Minute,  // Tempo para considerar o usuário ocioso
-		ActivityCheckRate: 30 * time.Second, // Verificação menos frequente para economizar recursos
-		ReduceOSSounds:    true,
-
-		MinRandomQuestion: 45 * time.Minute,
-		MaxRandomQuestion: 90 * time.Minute,
-		DatabaseFile:      "./focus_helper.db",
-		LogFile:           "./focus_helper.log",
+		DEBUG:                     false,
+		IdleTimeout:               3 * time.Minute,  // Tempo para considerar o usuário ocioso
+		ActivityCheckRate:         30 * time.Second, // Verificação menos frequente para economizar recursos
+		ReduceOSSounds:            true,
+		MinRandomQuestion:         45 * time.Minute,
+		WellbeingQuestionsEnabled: true,
+		MaxRandomQuestion:         90 * time.Minute,
+		DatabaseFile:              "./focus_helper.db",
+		LogFile:                   "./focus_helper.log",
 		Llama: LlamaConfig{
 			Model: "llama3.2:latest",
 		},
@@ -189,7 +189,7 @@ func loadDebugConfig() Config {
 				Actions: []ActionConfig{
 					{Type: ActionSound, SoundFile: "alert_level_3.mp3"},
 					{Type: ActionPopup, PopupTitle: "Teste de alerta nível 3", PopupMessage: "Siga as instruções da torre de comando imediatamente!"},
-					{Type: ActionATC, VoiceVolume: 1.5, BackgroundFile: "radio_static.wav", BackgroundVolume: 1.0, LlamaPrompt: "Piloto-Alfa-Um está perdendo o controle. Siga as instruções na tela."},                    
+					{Type: ActionATC, VoiceVolume: 1.5, BackgroundFile: "radio_static.wav", BackgroundVolume: 1.0, LlamaPrompt: "Piloto-Alfa-Um está perdendo o controle. Siga as instruções na tela."},
 					{Type: ActionATC, VoiceVolume: 1.5, BackgroundFile: "radio_static.wav", BackgroundVolume: 1.0, LlamaPrompt: "Piloto-Alfa-Um você deve prosseguir para o aeroporto mais próximo e pousar imediatamente."},
 				},
 			},
@@ -200,8 +200,8 @@ func loadDebugConfig() Config {
 				Multiplier: 5.0,
 				Actions: []ActionConfig{
 					{Type: ActionSound, SoundFile: "autopilot.mp3"},
-					{Type: ActionATC, VoiceVolume: 2.0, BackgroundVolume: 1.0, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um você perdeu o controle. Siga as instruções na tela."},                 
-					{Type: ActionATC, VoiceVolume: 2.0, BackgroundVolume: 1.0, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um solicito que desligue o piloto automático e siga as ordens da torre."}, 
+					{Type: ActionATC, VoiceVolume: 2.0, BackgroundVolume: 1.0, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um você perdeu o controle. Siga as instruções na tela."},
+					{Type: ActionATC, VoiceVolume: 2.0, BackgroundVolume: 1.0, BackgroundFile: "radio_static.wav", LlamaPrompt: "Piloto-Alfa-Um solicito que desligue o piloto automático e siga as ordens da torre."},
 				},
 			},
 		},

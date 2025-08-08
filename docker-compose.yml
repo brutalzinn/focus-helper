@@ -21,6 +21,7 @@ services:
     devices:
       - "/dev/snd:/dev/snd"
     tty: true
-    restart: "unless-stopped"
+    restart: "no"
+    stdin_open: true
     group_add:
       - audio

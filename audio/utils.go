@@ -85,20 +85,35 @@ func playSoundAmplified(filename string, multiplier float64) error {
 	var originalVolume string
 	var err error
 
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
 		originalVolume, err = getSystemVolumeMac()
 		if err != nil {
 			originalVolume = "75"
-		} // Default restore volume for mac
+		}
 		lowerVolumeCmd = exec.Command("osascript", "-e", "set volume output volume 20")
 		restoreVolumeCmd = exec.Command("osascript", "-e", "set volume output volume "+originalVolume)
 
-	} else if runtime.GOOS == "windows" {
-		originalVolume = "80%"                                                 // For logging purposes, as NirCmd can't get volume easily
+	case "windows":
+		originalVolume = "80%"                                                 // for logging
 		lowerVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "13107")   // ~20%
 		restoreVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "52428") // ~80%
 
-	} else {
+	case "linux":
+		sink, err := getDefaultSinkName()
+		if err != nil {
+			log.Println("Could not get default sink, skipping volume ducking.")
+			return playFile(filename, multiplier)
+		}
+		originalVolume, err = getSystemVolumeLinux()
+		if err != nil {
+			log.Println("Could not get current volume, defaulting to 100%")
+			originalVolume = "100%"
+		}
+		lowerVolumeCmd = exec.Command("pactl", "set-sink-volume", sink, "20%")
+		restoreVolumeCmd = exec.Command("pactl", "set-sink-volume", sink, originalVolume)
+
+	default:
 		return fmt.Errorf("unsupported OS for this method: %s", runtime.GOOS)
 	}
 
@@ -116,28 +131,24 @@ func playSoundAmplified(filename string, multiplier float64) error {
 }
 
 func playSoundIsolatedLinux(filename string, multiplier float64) error {
-	sinkName := "focus_priority_sink"
-	loadSinkCmd := exec.Command("pactl", "load-module", "module-null-sink", "sink_name="+sinkName)
-	if err := runCommand(loadSinkCmd); err != nil {
-		log.Println("Could not create virtual sink, playing with amplification as fallback.")
-		return playSoundAmplified(filename, multiplier)
-	}
-	defer func() {
-		log.Printf("Unloading virtual sink: %s", sinkName)
-		time.Sleep(100 * time.Millisecond)
-		unloadSinkCmd := exec.Command("pactl", "unload-module", "module-null-sink")
-		runCommand(unloadSinkCmd)
-	}()
 	originalVolume, err := getSystemVolumeLinux()
 	if err != nil {
 		originalVolume = "100%"
+		log.Println("Could not get current volume, defaulting to 100%")
 	}
-	lowerVolumeCmd := exec.Command("pactl", "set-sink-volume", "@DEFAULT_SINK@", "20%")
-	restoreVolumeCmd := exec.Command("pactl", "set-sink-volume", "@DEFAULT_SINK@", originalVolume)
-	runCommand(lowerVolumeCmd)
-	defer runCommand(restoreVolumeCmd)
-	log.Printf("Playing sound on isolated sink '%s' with multiplier %.2f", sinkName, multiplier)
-	return playFileOnSink(filename, multiplier, sinkName)
+
+	if err := runCommand(exec.Command("pactl", "set-sink-volume", "@DEFAULT_SINK@", "20%")); err != nil {
+		log.Println("Failed to lower system volume:", err)
+	}
+
+	defer func() {
+		time.Sleep(100 * time.Millisecond)
+		if err := runCommand(exec.Command("pactl", "set-sink-volume", "@DEFAULT_SINK@", originalVolume)); err != nil {
+			log.Println("Failed to restore system volume:", err)
+		}
+	}()
+
+	return playSoundAmplified(filename, multiplier)
 }
 
 func runCommand(cmd *exec.Cmd) error {
@@ -161,4 +172,13 @@ func getAssetPath(dir, filename string) string {
 		return "" // Return empty on error
 	}
 	return absPath
+}
+
+func getDefaultSinkName() (string, error) {
+	cmd := exec.Command("pactl", "get-default-sink")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
