@@ -1,13 +1,6 @@
 # ♾️ Focus Helper: ATC Edition
 
-
-A personal focus assistant that simulates an Air Traffic Control (ATC) tower to help you disconnect from the computer and avoid hyperfocus.
-
-Este repositório contém as versões em inglês e português do README para o projeto **Focus Helper: ATC Edition**.
-
-* [🇬🇧 English Version](docs/README-en.md)
-* [🇧🇷 Versão em Português](docs/README-pt.md)
-
+## A personal focus assistant that simulates an Air Traffic Control (ATC) tower to help you disconnect from the computer and avoid hyperfocus.
 
 ### Why does this project exist?
 
@@ -31,7 +24,7 @@ This project uses Docker to create a portable environment and a `Makefile` to si
 * **Docker and Docker Compose**: Make sure Docker and Docker Compose are installed and running on your system.
 * **Make**: The `make` utility is required to run the commands defined in the `Makefile`.
 * **Voice Models**: You need to download the voice models for the project to work.
-* **Ollama**: You need to have Ollama installed and running to use the AI model.
+* **Ollama**: You need to have Ollama installed and running to use the AI model like llama3.2
 
 #### Downloading the Voice Models
 

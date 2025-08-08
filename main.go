@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"io"
 	"log"
 	"math/rand"
@@ -30,8 +31,9 @@ type AppState struct {
 }
 
 func main() {
-	appConfig = config.Init(false)
-
+	debugFlag := flag.Bool("debug", false, "Set to true to enable debug mode")
+	flag.Parse()
+	appConfig = config.Init(*debugFlag)
 	setupLogger()
 
 	log.Println("--- Iniciando o Focus Helper ---")
@@ -147,7 +149,9 @@ func resetState(state *AppState) {
 	state.lastActivityTime = now
 	state.warnedThresholds = make(map[time.Duration]bool)
 	state.currentHyperfocusState = nil
-	response, err := integrations.GenerateTextWithLlama(config.AppConfig.Llama.Model, "Informe ao Alfa-Um que a torre está feliz em vê-lo de volta e que ele pode continuar sua missão com foco renovado.")
+	prompt := integrations.NewATCPromptManager()
+	text := prompt.FormatPrompt("Informe ao Alfa-Um que ele retornou da ociosidade e que seus contadores foram reiniciados.")
+	response, err := integrations.GenerateTextWithLlama(config.AppConfig.Llama.Model, text)
 	if err != nil {
 		log.Printf("Erro ao gerar resposta com Llama: %v", err)
 		response = "Usuário ativo novamente."

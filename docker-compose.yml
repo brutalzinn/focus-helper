@@ -1,0 +1,26 @@
+
+services:
+  focus-audio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    environment:
+      - OTO_DRIVER=pulseaudio
+      - PULSE_SERVER=${XDG_RUNTIME_DIR}/pulse/native
+      - DISPLAY=${DISPLAY}
+      # - OLLAMA_ENDPOINT=http://host.docker.internal:11434
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - ./assets:/app/assets
+      - ./voices:/app/voices
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native
+    devices:
+      - "/dev/snd:/dev/snd"
+    tty: true
+    restart: "unless-stopped"
+    group_add:
+      - audio

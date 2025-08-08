@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -36,16 +37,6 @@ func getSystemVolumeMac() (string, error) {
 		return "", fmt.Errorf("failed to get macos volume: %w", err)
 	}
 	return strings.TrimSpace(string(output)), nil
-}
-
-func runCommand(cmd *exec.Cmd) error {
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Printf("Erro no comando: %s\nOutput: %s", cmd.String(), stderr.String())
-	}
-	return err
 }
 
 func playFile(filename string, volume float64) error {
@@ -147,4 +138,27 @@ func playSoundIsolatedLinux(filename string, multiplier float64) error {
 	defer runCommand(restoreVolumeCmd)
 	log.Printf("Playing sound on isolated sink '%s' with multiplier %.2f", sinkName, multiplier)
 	return playFileOnSink(filename, multiplier, sinkName)
+}
+
+func runCommand(cmd *exec.Cmd) error {
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Erro no comando: %s\nOutput: %s", cmd.String(), stderr.String())
+	}
+	return err
+}
+
+func getAssetPath(dir, filename string) string {
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return filepath.Join("/app", dir, filename)
+	}
+
+	absPath, err := filepath.Abs(filepath.Join(dir, filename))
+	if err != nil {
+		log.Printf("Could not get absolute path for %s: %v", filename, err)
+		return "" // Return empty on error
+	}
+	return absPath
 }

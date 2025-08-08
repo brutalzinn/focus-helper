@@ -1,0 +1,5 @@
+.git
+.venv
+focus_helper
+focus_helper.db
+focus_helper.log

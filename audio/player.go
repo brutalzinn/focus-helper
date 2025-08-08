@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -39,7 +38,7 @@ func PlaySound(filename string, volume float64) error {
 	if !IsReady() {
 		return nil
 	}
-	staticAudio := filepath.Join("assets", filename)
+	staticAudio := getAssetPath("assets", filename)
 	if err := playPrioritySound(staticAudio, volume); err != nil {
 		log.Printf("Error playing final audio with ducking: %v", err)
 		return nil
@@ -54,17 +53,14 @@ func PlayRadioSimulation(message string, backgroundVolume, voiceVolume, playback
 		return nil
 	}
 
-	modelDir := "voices"
-	modelName := "pt_BR-cadu-medium"
-	assetsDir := "assets"
-	modelPath := filepath.Join(modelDir, modelName+".onnx")
-	configPath := filepath.Join(modelDir, modelName+".json")
-	backgroundAudioPath := filepath.Join(assetsDir, backgroundSound)
+	modelPath := getAssetPath("voices", "pt_BR-cadu-medium.onnx")
+	configPath := getAssetPath("voices", "pt_BR-cadu-medium.onnx.json")
 
-	tempVoiceRaw := filepath.Join(assetsDir, "temp_voice_raw.wav")
-	tempVoiceFiltered := filepath.Join(assetsDir, "temp_voice_filtered.wav")
-	tempBackgroundCropped := filepath.Join(assetsDir, "temp_background_cropped.wav")
-	finalOutput := filepath.Join(assetsDir, "final_radio_output.wav")
+	tempVoiceRaw := getAssetPath("assets", "temp_voice_raw.wav")
+	tempVoiceFiltered := getAssetPath("assets", "temp_voice_filtered.wav")
+	tempBackgroundCropped := getAssetPath("assets", "temp_background_cropped.wav")
+	finalOutput := getAssetPath("assets", "final_radio_output.wav")
+	backgroundAudioPath := getAssetPath("assets", backgroundSound)
 
 	defer func() {
 		audioMutex.Unlock()
@@ -126,100 +122,7 @@ func PlayRadioSimulation(message string, backgroundVolume, voiceVolume, playback
 	return nil
 }
 
-// func PlayRadioSimulation(message string, staticVol, mixedVolume, playbackMultiplier float64, backgroundSound string) error {
-// 	audioMutex.Lock()
-// 	if !IsReady() {
-// 		log.Println("Sistema de áudio não inicializado, pulando simulação de rádio.")
-// 		return nil
-// 	}
-// 	modelDir := "voices"
-// 	modelName := "pt_BR-cadu-medium"
-// 	assetsDir := "assets"
-
-// 	modelPath := filepath.Join(modelDir, modelName+".onnx")
-// 	configPath := filepath.Join(modelDir, modelName+".json")
-// 	staticAudio := filepath.Join(assetsDir, backgroundSound)
-
-// 	tempVoiceRaw := filepath.Join(assetsDir, "temp_voice_raw.wav")
-// 	tempVoiceFiltered := filepath.Join(assetsDir, "temp_voice_filtered.wav")
-// 	tempStaticCropped := filepath.Join(assetsDir, "temp_static_cropped.wav")
-
-// 	finalOutput := filepath.Join(assetsDir, "final_radio_output.wav")
-
-// 	defer func() {
-// 		audioMutex.Unlock()
-// 		log.Println("Limpando arquivos de áudio temporários...")
-// 		_ = os.Remove(tempVoiceRaw)
-// 		_ = os.Remove(tempVoiceFiltered)
-// 		_ = os.Remove(tempStaticCropped)
-// 		_ = os.Remove(finalOutput)
-// 	}()
-
-// 	piperCmd := exec.Command("piper",
-// 		"--model", modelPath,
-// 		"--config", configPath,
-// 		"--output_file", tempVoiceRaw,
-// 	)
-// 	piperCmd.Stdin = bytes.NewBufferString(message)
-// 	if err := runCommand(piperCmd); err != nil {
-// 		return fmt.Errorf("erro ao executar piper: %w", err)
-// 	}
-
-// 	soxFilterCmd := exec.Command("sox",
-// 		tempVoiceRaw,
-// 		"-r", "22050",
-// 		"-c", "1",
-// 		tempVoiceFiltered,
-// 		"highpass", "300",
-// 		"lowpass", "3000",
-// 		"compand", "0.3,1", "6:-70,-60,-20", "-5", "-90", "0.2",
-// 		"gain", "-n",
-// 	)
-// 	if err := runCommand(soxFilterCmd); err != nil {
-// 		return fmt.Errorf("erro ao aplicar efeitos de rádio com sox: %w", err)
-// 	}
-
-// 	if backgroundSound == "" {
-// 		log.Println("Nenhum som de fundo especificado, tocando apenas a voz ATC.")
-// 		return playPrioritySound(tempVoiceFiltered, playbackMultiplier)
-// 	}
-
-// 	duration, err := getAudioDuration(tempVoiceFiltered)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	ffmpegCmd := exec.Command("ffmpeg", "-y",
-// 		"-i", staticAudio,
-// 		"-t", fmt.Sprintf("%.3f", duration.Seconds()),
-// 		"-ar", "22050",
-// 		"-ac", "1",
-// 		tempStaticCropped,
-// 	)
-// 	if err := runCommand(ffmpegCmd); err != nil {
-// 		return fmt.Errorf("erro ao cortar áudio estático: %w", err)
-// 	}
-
-// 	soxMixCmd := exec.Command("sox",
-// 		"-m",
-// 		"-v", fmt.Sprintf("%.2f", mixedVolume), tempVoiceFiltered,
-// 		"-v", fmt.Sprintf("%.2f", staticVol), tempStaticCropped,
-// 		finalOutput,
-// 	)
-
-// 	if err := runCommand(soxMixCmd); err != nil {
-// 		return fmt.Errorf("erro ao mixar áudio com sox: %w", err)
-// 	}
-
-// 	if err := playPrioritySound(finalOutput, playbackMultiplier); err != nil {
-// 		log.Printf("Error playing final audio with ducking: %v", err)
-// 	}
-// 	return nil
-// }
-
 func playPrioritySound(filename string, multiplier float64) error {
-
-	// runtime.GOOS returns the running program's operating system.
 	switch runtime.GOOS {
 	case "linux":
 		log.Println("Using Linux 'virtual sink' method for priority audio.")

@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -82,7 +83,7 @@ func (pm *PromptManager) FormatPromptWithLevel(level string, instruction string)
 }
 
 func GenerateTextWithLlama(model, prompt string) (string, error) {
-	endpoint := "http://localhost:11434/api/generate"
+	endpoint := getOllamaEndpoint()
 	requestData := OllamaRequest{Model: model, Prompt: prompt, Stream: false}
 	jsonData, err := json.Marshal(requestData)
 	if err != nil {
@@ -114,4 +115,12 @@ func GenerateTextWithLlama(model, prompt string) (string, error) {
 	}
 	log.Println("Resposta recebida do Ollama.")
 	return ollamaResp.Response, nil
+}
+
+func getOllamaEndpoint() string {
+	endpoint := os.Getenv("OLLAMA_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "http://localhost:11434/api/generate"
+	}
+	return endpoint
 }

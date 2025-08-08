@@ -7,7 +7,6 @@ require (
 	github.com/faiface/beep v1.1.0
 	github.com/gen2brain/beeep v0.11.1
 	github.com/go-vgo/robotgo v0.110.8
-	github.com/hegedustibor/htgo-tts v0.0.0-20240912200108-467b3e535435
 	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/sqweek/dialog v0.0.0-20240226140203-065105509627
 )
@@ -32,9 +31,7 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
-	github.com/hajimehoshi/go-mp3 v0.3.3 // indirect
 	github.com/hajimehoshi/oto v0.7.1 // indirect
-	github.com/hajimehoshi/oto/v2 v2.2.0 // indirect
 	github.com/jackmordaunt/icns/v3 v3.0.1 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
