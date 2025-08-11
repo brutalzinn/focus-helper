@@ -64,15 +64,6 @@ func getAudioDuration(filePath string) (time.Duration, error) {
 	return time.Duration(durationFloat * float64(time.Second)), nil
 }
 
-func playFileOnSink(filename string, multiplier float64, sink string) error {
-	if multiplier <= 0 {
-		multiplier = 1.0
-	}
-	playCmd := exec.Command("play", "-q", filename, "gain", "-n", "vol", fmt.Sprintf("%.2f", multiplier))
-	playCmd.Env = append(os.Environ(), "PULSE_SINK="+sink)
-	return commands.RunCommand(playCmd)
-}
-
 func playSoundAmplified(filename string, volume float64) error {
 	var lowerVolumeCmd, restoreVolumeCmd *exec.Cmd
 	var originalVolume string
@@ -115,11 +106,9 @@ func playSoundAmplified(filename string, volume float64) error {
 		return playFile(filename, 1.0)
 	}
 	defer func() {
-		log.Printf("Restoring system volume to: %s", originalVolume)
+		// log.Printf("Restoring system volume to: %s", originalVolume)
 		commands.RunCommand(restoreVolumeCmd)
 	}()
-
-	log.Printf("Playing amplified sound with multiplier %.2f", volume)
 	return playFile(filename, volume)
 }
 
@@ -150,7 +139,6 @@ func GetAssetPath(filename string) string {
 	}
 	absPath, err := filepath.Abs(filepath.Join("assets", filename))
 	if err != nil {
-		log.Printf("Could not get absolute path for %s: %v", filename, err)
 		return "" // Return empty on error
 	}
 	return absPath

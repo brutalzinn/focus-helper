@@ -10,7 +10,7 @@
         "request": "launch",
         "mode": "debug",
         "program": "cmd/focus-helper/main.go",
-        "args": ["-debug"]
+        "args": ["-debug -profile kitt_1"]
     },
     ]
 }

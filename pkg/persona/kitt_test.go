@@ -1,7 +1,6 @@
 package persona
 
 import (
-	"focus-helper/pkg/language"
 	"focus-helper/pkg/variables"
 	"reflect"
 	"testing"
@@ -34,12 +33,4 @@ func TestKittPersona_GetDisplayWarn(t *testing.T) {
 	if !reflect.DeepEqual(displayContent, expected) {
 		t.Errorf("DisplayContent did not match expected.\nGot: %+v\nExpected: %+v", displayContent, expected)
 	}
-}
-
-func TestKitt_Correct_Prompt(t *testing.T) {
-	kitt := setupKittTest(t)
-
-	lang := language.NewManager("")
-
-	prompt := kitt.GetSystemPrompt()
 }

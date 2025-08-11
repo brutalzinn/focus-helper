@@ -8,17 +8,17 @@ import (
 
 	"focus-helper/pkg/audio"
 	"focus-helper/pkg/config"
-	"focus-helper/pkg/language"
 	"focus-helper/pkg/llm"
+	"focus-helper/pkg/models"
 	"focus-helper/pkg/notifications"
 	"focus-helper/pkg/persona"
+	"focus-helper/pkg/state"
 	"focus-helper/pkg/variables"
 )
 
 // ExecutorDependencies holds all the managers and configs the executor needs.
 type ExecutorDependencies struct {
-	AppConfig    *config.Config
-	LangManager  func(langDir, personaName, langCode string) (*language.LanguageManager, error)
+	AppConfig    *models.Config
 	VarProcessor *variables.Processor
 	Notifier     notifications.Notifier
 	LLMAdapter   llm.LLMAdapter
@@ -35,7 +35,7 @@ func NewExecutor(deps ExecutorDependencies) *Executor {
 }
 
 // Execute takes an action config and performs the corresponding action.
-func (e *Executor) Execute(action config.ActionConfig) error {
+func (e *Executor) Execute(action models.ActionConfig) error {
 	log.Printf("EXECUTING ACTION: Type=%s", action.Type)
 
 	switch action.Type {
@@ -57,22 +57,17 @@ func (e *Executor) Execute(action config.ActionConfig) error {
 	}
 }
 
-func (e *Executor) executeSpeakIAAction(action config.ActionConfig) error {
-	lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, config.AppConfig.Language)
-	if err != nil {
-		return fmt.Errorf("could not load language: %w", err)
-	}
+func (e *Executor) executeSpeakIAAction(action models.ActionConfig) error {
+
 	currentPersona, err := persona.GetPersona(e.deps.AppConfig.PersonaName, e.deps.VarProcessor)
 	if err != nil {
 		return fmt.Errorf("failed to get persona: %w", err)
 	}
-	taskPrompt, _ := currentPersona.GetPrompt(lm, action.Prompt)
+	taskPrompt, _ := currentPersona.GetPrompt(state.Instance.Language, action.Prompt)
 	finalText, err := e.deps.LLMAdapter.Generate(taskPrompt)
 	if err != nil {
 		log.Printf("WARNING: LLM generation failed, falling back to basic prompt: %v", err)
 	}
-
-	log.Printf("CALLING EXECUTOR: %v TEXT: %s", action.Type, finalText)
 	err = currentPersona.ProcessAudio(finalText)
 	if err != nil {
 		log.Printf("error on processing audio: %v", err)
@@ -87,21 +82,19 @@ func (e *Executor) executeSpeakIAAction(action config.ActionConfig) error {
 	// 		return nil
 	// 	}
 	// }
-
 	return nil
-	// 5. If no visual, play the final processed sound
 }
 
-func (e *Executor) executeSpeakAction(action config.ActionConfig) error {
-	lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, config.AppConfig.Language)
-	if err != nil {
-		return fmt.Errorf("could not load language: %w", err)
-	}
+func (e *Executor) executeSpeakAction(action models.ActionConfig) error {
+	// lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, config.AppConfig.Language)
+	// if err != nil {
+	// 	return fmt.Errorf("could not load language: %w", err)
+	// }
 	currentPersona, err := persona.GetPersona(e.deps.AppConfig.PersonaName, e.deps.VarProcessor)
 	if err != nil {
 		return fmt.Errorf("failed to get persona: %w", err)
 	}
-	finalText, err := currentPersona.GetText(lm, action.Text)
+	finalText, err := currentPersona.GetText(state.Instance.Language, action.Text)
 	if err != nil {
 		return fmt.Errorf("failed to get text persona: %w", err)
 	}
@@ -109,6 +102,5 @@ func (e *Executor) executeSpeakAction(action config.ActionConfig) error {
 	if err != nil {
 		log.Printf("error on processing audio: %v", err)
 	}
-
 	return nil
 }

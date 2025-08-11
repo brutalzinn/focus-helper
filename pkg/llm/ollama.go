@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"focus-helper/pkg/config"
+	"focus-helper/pkg/models"
 )
 
 type ollamaStreamResponse struct {
@@ -17,10 +17,10 @@ type ollamaStreamResponse struct {
 }
 
 type OllamaAdapter struct {
-	config config.IAModel
+	config models.IAModel
 }
 
-func NewOllamaAdapter(cfg config.IAModel) *OllamaAdapter {
+func NewOllamaAdapter(cfg models.IAModel) *OllamaAdapter {
 	return &OllamaAdapter{config: cfg}
 }
 

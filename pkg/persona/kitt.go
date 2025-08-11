@@ -3,6 +3,7 @@ package persona
 import (
 	"bytes"
 	"fmt"
+	"focus-helper/pkg/audio"
 	"focus-helper/pkg/commands"
 	"focus-helper/pkg/config"
 	"focus-helper/pkg/language"
@@ -46,14 +47,21 @@ func (k *KittPersona) GetText(lm *language.LanguageManager, context string) (str
 
 func (k *KittPersona) ProcessAudio(text string) error {
 	timestamp := time.Now().UnixNano()
-	normalVoiceFileName := fmt.Sprintf("%s_%d.wav", k.GetName(), timestamp)
-	finalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, normalVoiceFileName)
-	defer os.Remove(finalFilePath)
-	piperCmd := exec.Command("piper", "--model", VOICE_MODEL, "--output_file", finalFilePath)
+	originalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s.wav", timestamp, k.GetName()))
+	finalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, k.GetName()))
+	defer func() {
+		_ = os.Remove(originalFilePath)
+		_ = os.Remove(finalFilePath)
+	}()
+	piperCmd := exec.Command("piper", "--model", VOICE_MODEL, "--output_file", originalFilePath)
 	piperCmd.Stdin = bytes.NewBufferString(text)
 	if err := commands.RunCommand(piperCmd); err != nil {
 		return fmt.Errorf("piper TTS failed: %w", err)
 	}
+	if err := audio.ApplyRadioFilter(originalFilePath, finalFilePath); err != nil {
+		return err
+	}
+	audio.PlaySound(finalFilePath, 1.0)
 	return nil
 }
 

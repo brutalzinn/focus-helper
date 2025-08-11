@@ -3,7 +3,6 @@ package persona
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,11 +54,9 @@ func (a *ATCPersona) ProcessAudio(text string) error {
 	timestamp := time.Now().UnixNano()
 	backgroundAudioPath := audio.GetAssetPath("radio_static.wav")
 	originalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s.wav", timestamp, a.GetName()))
-	tempFiltered := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, a.GetName())) //fmt.Sprintf("%s_temp_filtered.wav", a.GetName())
+	tempFiltered := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, a.GetName()))
 	finalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_final.wav", timestamp, a.GetName()))
-	log.Printf("file path: %s", originalFilePath)
 	defer func() {
-		log.Println("Limpando arquivos de áudio temporários...")
 		_ = os.Remove(originalFilePath)
 		_ = os.Remove(tempFiltered)
 		_ = os.Remove(finalFilePath)

@@ -1,7 +1,6 @@
 package audio
 
 import (
-	"log"
 	"runtime"
 	"sync"
 	"time"
@@ -43,15 +42,10 @@ func PlaySound(filePath string, volume float64) error {
 func playPrioritySound(filename string, volume float64) error {
 	switch runtime.GOOS {
 	case "linux":
-		log.Println("Using Linux 'virtual sink' method for priority audio.")
 		return playSoundIsolatedLinux(filename, volume)
-
 	case "darwin", "windows":
-		log.Printf("Using '%s' 'amplify and lower' method for priority audio.", runtime.GOOS)
 		return playSoundAmplified(filename, volume)
-
 	default:
-		log.Printf("Priority audio not supported on %s. Playing normally.", runtime.GOOS)
 		return playFile(filename, 1.0)
 	}
 }

@@ -1,0 +1,44 @@
+{
+  "months": {
+    "1": "January",
+    "2": "February",
+    "3": "March",
+    "4": "April",
+    "5": "May",
+    "6": "June",
+    "7": "July",
+    "8": "August",
+    "9": "September",
+    "10": "October",
+    "11": "November",
+    "12": "December"
+  },
+  "date_format": "{month} {day}, {year}",
+  "time_format": "3:04 PM",
+  "low": "low",
+  "medium": "medium",
+  "high": "high",
+  "time_periods": {
+    "early_morning": "in the early morning",
+    "morning": "in the morning",
+    "noon": "noon",
+    "afternoon": "in the afternoon",
+    "night": "at night"
+  },
+  "hour_words": {
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+    "9": "nine",
+    "10": "ten",
+    "11": "eleven",
+    "12": "twelve"
+  },
+  "debug_on": "debug mode",
+  "debug_off": "debug mode disabled"
+}

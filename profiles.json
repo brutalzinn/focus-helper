@@ -1,0 +1,160 @@
+[
+    {
+        "name": "atc_1",
+        "time_location": "America/Sao_Paulo",
+        "persona_name": "atc_tower",
+        "language": "pt-br",
+        "username": "Piloto-Alfa-Um",
+        "iamodel": {
+            "type": "ollama",
+            "model": "llama3.2",
+            "url": "http://localhost:11434/api/generate"
+        },
+        "idle_timeout": "3m",
+        "activity_check_rate": "30s",
+        "min_random_question": "45m",
+        "max_random_question": "90m",
+        "reduce_os_sounds": true,
+        "wellbeing_questions_enabled": true,
+        "database_file": "./focus_helper.db",
+        "log_file": "./focus_helper.log",
+        "alert_levels": [
+            {
+                "enabled": true,
+                "level": "low",
+                "threshold": "45m",
+                "actions": [
+                    {
+                        "type": "SOUND",
+                        "sound_file": "alert_level_1.mp3"
+                    },
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."
+                    }
+                ]
+            },
+            {
+                "enabled": true,
+                "level": "medium",
+                "threshold": "90m",
+                "multiplier": 1.5,
+                "actions": [
+                    {
+                        "type": "SOUND",
+                        "sound_file": "autopilot.mp3"
+                    },
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."
+                    }
+                ]
+            },
+            {
+                "enabled": true,
+                "level": "high",
+                "threshold": "2h30m",
+                "multiplier": 2.5,
+                "actions": [
+                    {
+                        "type": "SOUND",
+                        "sound_file": "alert_level_3.mp3"
+                    },
+                    {
+                        "type": "POPUP",
+                        "popup_title": "Alerta de Foco Intenso",
+                        "popup_message": "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."
+                    },
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."
+                    }
+                ]
+            },
+            {
+                "enabled": true,
+                "level": "critical",
+                "threshold": "4h",
+                "multiplier": 5.0,
+                "actions": [
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "kitt_1",
+        "persona_name": "kitt",
+        "language": "pt-br",
+        "username": "Michael",
+        "time_location": "America/Sao_Paulo",
+        "iamodel": {
+            "type": "ollama",
+            "model": "llama3.2",
+            "url": "http://localhost:11434/api/generate"
+        },
+        "idle_timeout": "3m",
+        "activity_check_rate": "30s",
+        "min_random_question": "45m",
+        "max_random_question": "90m",
+        "reduce_os_sounds": true,
+        "wellbeing_questions_enabled": false,
+        "alert_levels": [
+            {
+                "enabled": true,
+                "level": "low",
+                "threshold": "45m",
+                "actions": [
+                    {
+                        "type": "SOUND",
+                        "sound_file": "kitt_scanner.mp3"
+                    },
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Michael, sistema KITT ativo. Sugestão: verifique seus sistemas e considere uma breve pausa para concluir nossa missão com segurança."
+                    }
+                ]
+            },
+            {
+                "enabled": true,
+                "level": "medium",
+                "threshold": "90m",
+                "multiplier": 1.5,
+                "actions": [
+                    {
+                        "type": "SOUND",
+                        "sound_file": "kitt_scanner.mp3"
+                    },
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Michael, detectei um longo período de foco. Recomendo hidratação e alongamento. Nível de hyperfoco: %level%."
+                    }
+                ]
+            },
+            {
+                "enabled": true,
+                "level": "high",
+                "threshold": "3h30m",
+                "multiplier": 2.5,
+                "actions": [
+                    {
+                        "type": "SOUND",
+                        "sound_file": "kitt_scanner.mp3"
+                    },
+                    {
+                        "type": "POPUP",
+                        "popup_title": "Alerta KITT: Foco Extremo",
+                        "popup_message": "Operação contínua detectada. Pausa longa recomendada para manutenção do sistema."
+                    },
+                    {
+                        "type": "SPEAK_IA",
+                        "llama_prompt": "Michael, sinais claros de hiperfoco detectados. Pausar é essencial para preservar performance e integridade do sistema."
+                    }
+                ]
+            }
+        ]
+    }
+]
