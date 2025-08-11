@@ -15,7 +15,7 @@ func ApplyRadioFilter(inputFile, outputFile string) error {
 }
 
 func MixWithBackground(originalFilePath, backgroundAudioPath, finalOutputFile string, backgroundVolume float64, originalVolume float64) error {
-	tempBackgroundCropped := filepath.Join(config.TEMP_AUDIO_DIR, "temp_background_cropped.wav")
+	tempBackgroundCropped := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR, "temp_background_cropped.wav")
 	defer os.Remove(tempBackgroundCropped)
 	duration, err := getAudioDuration(originalFilePath)
 	if err != nil {
