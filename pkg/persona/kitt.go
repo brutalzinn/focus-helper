@@ -47,8 +47,8 @@ func (k *KittPersona) GetText(lm *language.LanguageManager, context string) (str
 
 func (k *KittPersona) ProcessAudio(text string) error {
 	timestamp := time.Now().UnixNano()
-	originalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s.wav", timestamp, k.GetName()))
-	finalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, k.GetName()))
+	originalFilePath := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s.wav", timestamp, k.GetName()))
+	finalFilePath := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, k.GetName()))
 	defer func() {
 		_ = os.Remove(originalFilePath)
 		_ = os.Remove(finalFilePath)

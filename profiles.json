@@ -1,6 +1,6 @@
 [
     {
-        "name": "atc_1",
+        "name": "default",
         "time_location": "America/Sao_Paulo",
         "persona_name": "atc_tower",
         "language": "pt-br",

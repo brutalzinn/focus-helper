@@ -3,6 +3,7 @@ package audio
 import (
 	"fmt"
 	"focus-helper/pkg/commands"
+	"focus-helper/pkg/config"
 	"log"
 	"os"
 	"os/exec"
@@ -137,9 +138,5 @@ func GetAssetPath(filename string) string {
 	if _, err := os.Stat("/.dockerenv"); err == nil {
 		return filepath.Join("/app", "assets", filename)
 	}
-	absPath, err := filepath.Abs(filepath.Join("assets", filename))
-	if err != nil {
-		return "" // Return empty on error
-	}
-	return absPath
+	return filepath.Join(config.GetUserConfigPath(), "assets", filename)
 }

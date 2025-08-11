@@ -95,10 +95,10 @@ func main() {
 		LLMAdapter:   llmAdapter,
 	}
 	actionExecutor = actions.NewExecutor(executorDeps)
-	if err := os.MkdirAll(config.TEMP_AUDIO_DIR, 0755); err != nil {
+	tempAudioDir := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR)
+	if err := os.MkdirAll(tempAudioDir, 0755); err != nil {
 		log.Fatalf("Failed to create temp audio directory: %v", err)
 	}
-	tempAudioDir := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR)
 	fs := http.FileServer(http.Dir(tempAudioDir))
 	http.Handle("/temp_audio/", http.StripPrefix("/temp_audio/", fs))
 	go func() {
