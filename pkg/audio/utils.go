@@ -144,11 +144,11 @@ func playSoundIsolatedLinux(filename string, volume float64) error {
 	return playSoundAmplified(filename, volume)
 }
 
-func getAssetPath(dir, filename string) string {
+func GetAssetPath(filename string) string {
 	if _, err := os.Stat("/.dockerenv"); err == nil {
-		return filepath.Join("/app", dir, filename)
+		return filepath.Join("/app", "assets", filename)
 	}
-	absPath, err := filepath.Abs(filepath.Join(dir, filename))
+	absPath, err := filepath.Abs(filepath.Join("assets", filename))
 	if err != nil {
 		log.Printf("Could not get absolute path for %s: %v", filename, err)
 		return "" // Return empty on error

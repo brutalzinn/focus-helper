@@ -17,7 +17,6 @@ func InitSpeaker() {
 	sampleRate := beep.SampleRate(44100)
 	err := speaker.Init(sampleRate, sampleRate.N(time.Second/10))
 	if err != nil {
-		log.Printf("AVISO: Não foi possível inicializar o sistema de áudio: %v", err)
 		audioInitialized = false
 	} else {
 		audioInitialized = true
@@ -28,22 +27,17 @@ func IsReady() bool {
 	return audioInitialized
 }
 
-func PlaySound(filename string, volume float64) error {
+func PlaySound(filePath string, volume float64) error {
 	audioMutex.Lock()
 	defer audioMutex.Unlock()
-	if !IsReady() {
-		return nil
-	}
+	// if !IsReady() {
+	// 	return nil
+	// }
 	if volume <= 0 {
-		log.Println("PlayRadioSimulation Volume deve ser maior que zero, usando volume padrão de 1.0")
 		volume = 1.0
 	}
-	staticAudio := getAssetPath("assets", filename)
-	if err := playPrioritySound(staticAudio, volume); err != nil {
-		log.Printf("Error playing final audio with ducking: %v", err)
-		return nil
-	}
-	return nil
+	err := playPrioritySound(filePath, volume)
+	return err
 }
 
 func playPrioritySound(filename string, volume float64) error {

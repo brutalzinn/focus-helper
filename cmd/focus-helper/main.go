@@ -5,6 +5,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -19,14 +20,10 @@ import (
 	"focus-helper/pkg/language"
 	"focus-helper/pkg/llm"
 	"focus-helper/pkg/notifications"
+	"focus-helper/pkg/persona"
 	"focus-helper/pkg/variables"
 
 	_ "github.com/mattn/go-sqlite3"
-)
-
-const (
-	serverPort   = "8088"
-	tempAudioDir = "temp_audio"
 )
 
 // Global variables for core services
@@ -44,6 +41,8 @@ type AppState struct {
 	continuousUsageStartTime time.Time
 	warnedThresholds         map[time.Duration]bool
 	currentHyperfocusState   *config.HyperfocusState
+	currentPersona           persona.Persona
+	currentLanguage          *language.LanguageManager
 }
 
 func main() {
@@ -72,32 +71,42 @@ func main() {
 	if err != nil {
 		log.Fatalf("FATAL: Nao foi possivel criar o adaptador LLM: %v", err)
 	}
+	variablesProcessor := variables.NewProcessor()
 
 	executorDeps := actions.ExecutorDependencies{
 		AppConfig:    &appConfig,
 		LangManager:  language.NewManager,
-		VarProcessor: variables.NewProcessor(),
+		VarProcessor: variablesProcessor,
 		Notifier:     notifier,
 		LLMAdapter:   llmAdapter,
 	}
 	actionExecutor = actions.NewExecutor(executorDeps)
-	if err := os.MkdirAll(tempAudioDir, 0755); err != nil {
+	if err := os.MkdirAll(config.TEMP_AUDIO_DIR, 0755); err != nil {
 		log.Fatalf("Failed to create temp audio directory: %v", err)
 	}
-	fs := http.FileServer(http.Dir(tempAudioDir))
+	fs := http.FileServer(http.Dir(config.TEMP_AUDIO_DIR))
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	go func() {
-		log.Printf("Servidor de áudio rodando em http://localhost:%s", serverPort)
-		if err := http.ListenAndServe(":"+serverPort, nil); err != nil {
+		log.Printf("Servidor de áudio rodando em http://localhost:%s", config.SERVER_PORT)
+		if err := http.ListenAndServe(":"+config.SERVER_PORT, nil); err != nil {
 			log.Fatalf("Falha ao iniciar servidor de áudio: %v", err)
 		}
 	}()
 
-	// --- Start main application loops ---
+	currentPersona, err := persona.GetPersona(config.AppConfig.PersonaName, variablesProcessor)
+	if err != nil {
+		log.Fatalf("Failed to get current person: %v", err)
+	}
+	lm, err := language.NewManager("pkg/language", config.AppConfig.PersonaName, config.AppConfig.Language)
+	if err != nil {
+		log.Fatalf("Failed to get current person: %v", err)
+	}
 	state := &AppState{
 		lastActivityTime:         time.Now(),
 		continuousUsageStartTime: time.Now(),
 		warnedThresholds:         make(map[time.Duration]bool),
+		currentPersona:           currentPersona,
+		currentLanguage:          lm,
 	}
 
 	go monitorActivityLoop(state)
@@ -107,13 +116,41 @@ func main() {
 		log.Println("Questoes de bem estar desativadas.")
 	}
 
+	setupCustomVariables(variablesProcessor, state)
+
 	welcomeAction := config.ActionConfig{
-		Type:   config.ActionSpeak,
-		Prompt: "Bem-vindo de volta, %username%. %person% na escuta. Hoje é %date%.",
+		Type: config.ActionSpeak,
+		Text: "Bem-vindo de volta, %username%. %person% na escuta",
 	}
 	go actionExecutor.Execute(welcomeAction)
-	log.Println("Focus Helper esta rodando em background.")
 	select {}
+}
+
+func setupCustomVariables(processor *variables.Processor, state *AppState) {
+
+	processor.RegisterHandler("level", func(context ...string) string {
+		return state.currentHyperfocusState.Level
+	})
+	processor.RegisterHandler("activity_duration", func(context ...string) string {
+		usageDuration := time.Since(state.continuousUsageStartTime)
+		activityDuration := formatDuration(usageDuration)
+		return activityDuration
+	})
+	processor.RegisterHandler("username", func(context ...string) string {
+		return config.AppConfig.Username
+	})
+	processor.RegisterHandler("person", func(context ...string) string {
+		return state.currentPersona.GetName()
+	})
+	processor.RegisterHandler("date", func(context ...string) string {
+		now := time.Now()
+		monthsPtBr := []string{"", "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
+		return fmt.Sprintf("%d de %s de %d", now.Day(), monthsPtBr[now.Month()], now.Year())
+	})
+	processor.RegisterHandler("time", func(context ...string) string {
+		loc, _ := time.LoadLocation("America/Sao_Paulo")
+		return time.Now().In(loc).Format("3:04 PM")
+	})
 }
 
 func setupLogger() {
@@ -149,7 +186,6 @@ func monitorActivityLoop(state *AppState) {
 						StartTime: time.Now(),
 					}
 				}
-				// Execute all actions defined for this alert level
 				for _, action := range level.Actions {
 					go actionExecutor.Execute(action)
 				}
@@ -210,4 +246,16 @@ func resetState(state *AppState) {
 		Prompt: "Informe ao %username% que ele retornou da ociosidade e que seus contadores foram reiniciados.",
 	}
 	go actionExecutor.Execute(action)
+}
+
+func formatDuration(d time.Duration) string {
+	h := int(d.Hours())
+	m := int(d.Minutes()) % 60
+	s := int(d.Seconds()) % 60
+	if h > 0 {
+		return fmt.Sprintf("%dh %dm %ds", h, m, s)
+	} else if m > 0 {
+		return fmt.Sprintf("%dm %ds", m, s)
+	}
+	return fmt.Sprintf("%ds", s)
 }

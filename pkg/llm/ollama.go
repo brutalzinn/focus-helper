@@ -28,6 +28,7 @@ func (a *OllamaAdapter) Generate(prompt string) (string, error) {
 	reqBody := map[string]any{
 		"model":  a.config.Model,
 		"prompt": prompt,
+		"stream": false,
 	}
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {

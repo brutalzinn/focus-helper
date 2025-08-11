@@ -5,8 +5,6 @@ package actions
 import (
 	"fmt"
 	"log"
-	"path/filepath"
-	"time"
 
 	"focus-helper/pkg/audio"
 	"focus-helper/pkg/config"
@@ -42,13 +40,15 @@ func (e *Executor) Execute(action config.ActionConfig) error {
 
 	switch action.Type {
 	case config.ActionSound:
-		return audio.PlaySound(action.SoundFile, 1.0)
+		return audio.PlaySound(audio.GetAssetPath(action.SoundFile), 1.0)
 
 	case config.ActionPopup:
 		// Using the injected Notifier interface
 		_, err := e.deps.Notifier.Question(action.PopupTitle, action.PopupMessage)
 		return err
 
+	case config.ActionSpeakIA:
+		return e.executeSpeakIAAction(action)
 	case config.ActionSpeak:
 		return e.executeSpeakAction(action)
 
@@ -57,9 +57,8 @@ func (e *Executor) Execute(action config.ActionConfig) error {
 	}
 }
 
-func (e *Executor) executeSpeakAction(action config.ActionConfig) error {
-	currentLang := "pt-br"
-	lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, currentLang)
+func (e *Executor) executeSpeakIAAction(action config.ActionConfig) error {
+	lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, config.AppConfig.Language)
 	if err != nil {
 		return fmt.Errorf("could not load language: %w", err)
 	}
@@ -73,21 +72,8 @@ func (e *Executor) executeSpeakAction(action config.ActionConfig) error {
 		log.Printf("WARNING: LLM generation failed, falling back to basic prompt: %v", err)
 	}
 
-	// --- Start of the corrected audio pipeline ---
-
-	// 2. Generate a raw audio file using a Text-to-Speech engine (Piper)
-	tempAudioDir := "temp_audio"
-	timestamp := time.Now().UnixNano()
-	rawFileName := fmt.Sprintf("raw_%d.wav", timestamp)
-	rawFilePath := filepath.Join(tempAudioDir, rawFileName)
-
-	// currentPersona.ProcessAudio(rawFilePath, finalFilePath)
-
-	// 3. The Persona processes the raw file to apply its unique effects
-	// finalFileName := fmt.Sprintf("final_%s_%d.wav", currentPersona.GetName(), timestamp)
-	// finalFilePath := filepath.Join(tempAudioDir, finalFileName)
-	log.Printf("CALLING EXECUTOR: %v", action.Type)
-	err = currentPersona.ProcessAudio(finalText, rawFilePath)
+	log.Printf("CALLING EXECUTOR: %v TEXT: %s", action.Type, finalText)
+	err = currentPersona.ProcessAudio(finalText)
 	if err != nil {
 		log.Printf("error on processing audio: %v", err)
 	}
@@ -104,5 +90,25 @@ func (e *Executor) executeSpeakAction(action config.ActionConfig) error {
 
 	return nil
 	// 5. If no visual, play the final processed sound
-	// return audio.PlaySound(rawFilePath, 1.0)
+}
+
+func (e *Executor) executeSpeakAction(action config.ActionConfig) error {
+	lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, config.AppConfig.Language)
+	if err != nil {
+		return fmt.Errorf("could not load language: %w", err)
+	}
+	currentPersona, err := persona.GetPersona(e.deps.AppConfig.PersonaName, e.deps.VarProcessor)
+	if err != nil {
+		return fmt.Errorf("failed to get persona: %w", err)
+	}
+	finalText, err := currentPersona.GetText(lm, action.Text)
+	if err != nil {
+		return fmt.Errorf("failed to get text persona: %w", err)
+	}
+	err = currentPersona.ProcessAudio(finalText)
+	if err != nil {
+		log.Printf("error on processing audio: %v", err)
+	}
+
+	return nil
 }

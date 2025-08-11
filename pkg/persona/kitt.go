@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"focus-helper/pkg/commands"
+	"focus-helper/pkg/config"
 	"focus-helper/pkg/language"
 	"focus-helper/pkg/variables"
 	"os"
 	"os/exec"
-)
-
-var (
-	VOICE_MODEL = "voices/pt_BR-cadu-medium.onnx"
+	"path/filepath"
+	"time"
 )
 
 type KittPersona struct {
@@ -40,10 +39,18 @@ func (k *KittPersona) GetPrompt(lm *language.LanguageManager, context string) (s
 	return finalPrompt, nil
 }
 
-func (k *KittPersona) ProcessAudio(prompt, filePath string) error {
-	defer os.Remove(filePath)
-	piperCmd := exec.Command("piper", "--model", VOICE_MODEL, "--output_file", filePath)
-	piperCmd.Stdin = bytes.NewBufferString(prompt)
+func (k *KittPersona) GetText(lm *language.LanguageManager, context string) (string, error) {
+	finalPrompt := k.proc.Process(context, k.GetName())
+	return finalPrompt, nil
+}
+
+func (k *KittPersona) ProcessAudio(text string) error {
+	timestamp := time.Now().UnixNano()
+	normalVoiceFileName := fmt.Sprintf("%s_%d.wav", k.GetName(), timestamp)
+	finalFilePath := filepath.Join(config.TEMP_AUDIO_DIR, normalVoiceFileName)
+	defer os.Remove(finalFilePath)
+	piperCmd := exec.Command("piper", "--model", VOICE_MODEL, "--output_file", finalFilePath)
+	piperCmd.Stdin = bytes.NewBufferString(text)
 	if err := commands.RunCommand(piperCmd); err != nil {
 		return fmt.Errorf("piper TTS failed: %w", err)
 	}
