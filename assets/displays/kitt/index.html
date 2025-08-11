@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>KITT Voice Box</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-family: sans-serif;
+    flex-direction: column;
+  }
+  .voicebox-container {
+    display: flex;
+    align-items: flex-end;
+    height: 150px;
+    width: 60%;
+    gap: 6px;
+    margin-top: 20px;
+    visibility: hidden; /* Hide initially */
+  }
+  .voicebox-bar {
+    flex: 1;
+    background: #ff0202;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(255, 2, 2, 0.7);
+    transform-origin: bottom;
+    transform: scaleY(0);
+    transition: transform 0.05s linear, box-shadow 0.1s linear;
+  }
+  button {
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background: #ff0000;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    box-shadow: 0 0 15px #ff0000;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #cc0000;
+  }
+</style>
+</head>
+<body>
+  <button id="playBtn">▶️ Tocar Áudio</button>
+
+  <div id="kitt-voicebox" class="voicebox-container">
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+    <div class="voicebox-bar"></div>
+  </div>
+
+  <script>
+    const playBtn = document.getElementById('playBtn');
+    const voicebox = document.getElementById('kitt-voicebox');
+
+    playBtn.onclick = () => {
+      const params = new URLSearchParams(window.location.search);
+      const audioUrl = params.get('audioURL');
+      if (!audioUrl) {
+        alert('Erro: parâmetro audioURL não fornecido.');
+        return;
+      }
+
+      // Hide button and show voicebox
+      playBtn.style.display = 'none';
+      voicebox.style.visibility = 'visible';
+
+      startVoicebox(audioUrl);
+    };
+
+    function startVoicebox(audioUrl) {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const bars = document.querySelectorAll('.voicebox-bar');
+
+      fetch(audioUrl)
+        .then(res => res.arrayBuffer())
+        .then(buffer => audioCtx.decodeAudioData(buffer))
+        .then(decodedData => {
+          const source = audioCtx.createBufferSource();
+          source.buffer = decodedData;
+          source.connect(analyser);
+          analyser.connect(audioCtx.destination);
+
+          // Resume context on gesture (required by browser policies)
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+
+          source.start();
+
+          function animate() {
+            requestAnimationFrame(animate);
+            analyser.getByteFrequencyData(dataArray);
+
+            let sum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+              sum += dataArray[i];
+            }
+            const avg = sum / bufferLength;
+            const baseScale = Math.min(avg / 120, 1);
+
+            bars.forEach((bar, idx) => {
+              const scale = baseScale * (0.7 + 0.3 * Math.sin(Date.now() * 0.005 + idx));
+              bar.style.transform = `scaleY(${scale})`;
+              const glow = 8 + scale * 20;
+              const opacity = 0.3 + scale * 0.7;
+              bar.style.boxShadow = `0 0 ${glow}px rgba(255, 2, 2, ${opacity})`;
+            });
+          }
+          animate();
+        })
+        .catch(err => {
+          alert(`Erro ao carregar áudio: ${err.message}`);
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>

@@ -52,7 +52,6 @@ ENV LD_LIBRARY_PATH=/opt/piper
 WORKDIR /app
 
 COPY --from=builder /focus-helper /app/focus-helper
-COPY ./assets ./assets
-COPY ./voices ./voices
+COPY . . 
 
 CMD ["/app/focus-helper"]

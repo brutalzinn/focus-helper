@@ -10,3 +10,4 @@
 *.db
 *.sqlite
 *.log
+/temp_audio
