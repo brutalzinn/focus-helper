@@ -15,10 +15,6 @@ import (
 	"focus-helper/pkg/variables"
 )
 
-var (
-	VOICE_MODEL = filepath.Join("voices", "pt_BR-cadu-medium.onnx")
-)
-
 type ATCPersona struct {
 	proc *variables.Processor
 }

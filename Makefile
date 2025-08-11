@@ -3,18 +3,21 @@ BIN_DIR := $(HOME)/.config/$(APP_NAME)
 CONFIG_DIR := $(HOME)/.config/$(APP_NAME)
 LANGS_DIR := langs
 ASSETS_DIR := assets
+VOICES_DIR := voices
+
 PROFILES_JSON := profiles.json
 
 DEST_LANGS_DIR := $(CONFIG_DIR)/langs
 DEST_ASSETS_DIR := $(CONFIG_DIR)/assets
 DEST_PROFILES_JSON := $(CONFIG_DIR)/profiles.json
+DEST_VOICES_DIR := $(CONFIG_DIR)/voices
 
 GO := go
 GO_BUILD := $(GO) build
 GO_INSTALL := $(GO) install
 BIN_PATH := $(BIN_DIR)/$(APP_NAME)
 
-install: build copy-langs copy-assets copy-profiles move-binary
+install: build copy-langs copy-assets copy-profiles copy-voices move-binary
 
 build:
 	@echo "Building the Go binary..."
@@ -24,6 +27,11 @@ copy-langs:
 	@echo "Copying langs directory..."
 	@mkdir -p $(DEST_LANGS_DIR)
 	@cp -r $(LANGS_DIR)/. $(DEST_LANGS_DIR)
+
+copy-voices:
+	@echo "Copying voices directory..."
+	@mkdir -p $(DEST_VOICES_DIR)
+	@cp -r $(VOICES_DIR)/. $(DEST_VOICES_DIR)
 
 copy-assets:
 	@echo "Copying assets directory..."

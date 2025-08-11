@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"focus-helper/pkg/models"
+	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -107,4 +109,17 @@ func DefaultProfile() models.Config {
 			},
 		},
 	}
+}
+
+func GetUserConfigPath() string {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatalf("Error getting user config directory: %v", err)
+	}
+	userConfigPath := filepath.Join(configDir, "focushelper")
+	err = os.MkdirAll(userConfigPath, 0755)
+	if err != nil {
+		log.Fatalf("Error creating user config directory: %v", err)
+	}
+	return userConfigPath
 }

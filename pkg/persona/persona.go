@@ -4,9 +4,15 @@ package persona
 
 import (
 	"fmt"
+	"path/filepath"
 
+	"focus-helper/pkg/config"
 	"focus-helper/pkg/language"
 	"focus-helper/pkg/variables"
+)
+
+var (
+	VOICE_MODEL = filepath.Join(config.GetUserConfigPath(), "voices", "pt_BR-cadu-medium.onnx")
 )
 
 type DisplayContent struct {
