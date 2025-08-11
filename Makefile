@@ -1,43 +1,54 @@
-# Makefile para o projeto Focus Helper
+APP_NAME := focushelper
+BIN_DIR := $(HOME)/.config/$(APP_NAME)
+CONFIG_DIR := $(HOME)/.config/$(APP_NAME)
+LANGS_DIR := langs
+ASSETS_DIR := assets
+PROFILES_JSON := profiles.json
 
-IMAGE_NAME := focus-helper
-CONTAINER_NAME := focus-helper-container
+DEST_LANGS_DIR := $(CONFIG_DIR)/langs
+DEST_ASSETS_DIR := $(CONFIG_DIR)/assets
+DEST_PROFILES_JSON := $(CONFIG_DIR)/profiles.json
 
-.PHONY: all build rebuild run stop clean logs help
+GO := go
+GO_BUILD := $(GO) build
+GO_INSTALL := $(GO) install
+BIN_PATH := $(BIN_DIR)/$(APP_NAME)
 
-all: build
+install: build copy-langs copy-assets copy-profiles move-binary
 
 build:
-	@echo "--> Construindo a imagem Docker '${IMAGE_NAME}'..."
-	@docker build -t $(IMAGE_NAME) .
+	@echo "Building the Go binary..."
+	$(GO_BUILD) -o $(APP_NAME) cmd/focus-helper/main.go
 
-rebuild: clean build
+copy-langs:
+	@echo "Copying langs directory..."
+	@mkdir -p $(DEST_LANGS_DIR)
+	@cp -r $(LANGS_DIR)/. $(DEST_LANGS_DIR)
 
-# O comando 'run' agora simplesmente executa nosso script robusto.
-run:
-	@echo "--> Executando o contêiner via script 'run-docker.sh'..."
-	@./entrypoint.sh
+copy-assets:
+	@echo "Copying assets directory..."
+	@mkdir -p $(DEST_ASSETS_DIR)
+	@cp -r $(ASSETS_DIR)/. $(DEST_ASSETS_DIR)
 
-stop:
-	@echo "--> Parando e removendo o contêiner '${CONTAINER_NAME}'..."
-	@docker stop $(CONTAINER_NAME) 2>/dev/null || true
-	@docker rm $(CONTAINER_NAME) 2>/dev/null || true
+copy-profiles:
+	@echo "Copying profiles.json..."
+	@cp $(PROFILES_JSON) $(DEST_PROFILES_JSON)
 
-clean: stop
-	@echo "--> Removendo a imagem Docker '${IMAGE_NAME}'..."
-	@docker rmi $(IMAGE_NAME) 2>/dev/null || true
+move-binary:
+	@echo "Moving the binary to /usr/local/bin..."
+	@sudo mv $(APP_NAME) /usr/local/bin/$(APP_NAME)
+	@sudo chmod +x /usr/local/bin/$(APP_NAME)
 
-logs:
-	@echo "--> Exibindo logs do contêiner '${CONTAINER_NAME}'..."
-	@docker logs -f $(CONTAINER_NAME)
+clean:
+	@echo "Cleaning up..."
+	@rm -rf $(CONFIG_DIR) $(APP_NAME)
 
 help:
-	@echo "Uso: make [alvo]"
-	@echo "  build    Constrói a imagem Docker."
-	@echo "  rebuild  Força a remoção e reconstrução da imagem."
-	@echo "  run      Executa o contêiner com acesso a GUI/Áudio."
-	@echo "  stop     Para e remove o contêiner."
-	@echo "  clean    Remove a imagem Docker."
-	@echo "  logs     Exibe os logs do contêiner."
-
-.DEFAULT_GOAL := help
+	@echo "Available targets:"
+	@echo "  install       - Build and install the binary and copy the config files"
+	@echo "  clean         - Clean up the build files and config directories"
+	@echo "  build         - Build the Go binary"
+	@echo "  copy-langs    - Copy the langs directory to the config directory"
+	@echo "  copy-assets   - Copy the assets directory to the config directory"
+	@echo "  copy-profiles - Copy the profiles.json to the config directory"
+	@echo "  move-binary   - Move the binary to a globally available directory"

@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,10 +39,13 @@ var (
 )
 
 func main() {
+	clearTempAudioOnExit()
+
 	debugFlag := flag.Bool("debug", false, "Set to true to enable debug mode")
 	profileFlag := flag.String("profile", "default", "Profile name to load from profiles.json")
 	flag.Parse()
-	profiles, err := config.LoadProfiles("profiles.json")
+	profilePath := filepath.Join(getUserConfigPath(), "profiles.json")
+	profiles, err := config.LoadProfiles(profilePath)
 	if err != nil {
 		log.Fatalf("Error load profile: %v", err)
 	}
@@ -57,8 +61,6 @@ func main() {
 			cfg.AlertLevels[i].Threshold = models.Duration{Duration: (cfg.AlertLevels[i].Threshold.Duration / 2) * time.Second}
 		}
 		log.Printf("WARNING: all times is set to half and converted to seconds.")
-		cfg.DatabaseFile = "./focus_helper_debug.db"
-		cfg.LogFile = "./focus_helper_debug.log"
 	}
 
 	appConfig = *cfg
@@ -96,7 +98,8 @@ func main() {
 	if err := os.MkdirAll(config.TEMP_AUDIO_DIR, 0755); err != nil {
 		log.Fatalf("Failed to create temp audio directory: %v", err)
 	}
-	fs := http.FileServer(http.Dir(config.TEMP_AUDIO_DIR))
+	tempAudioDir := filepath.Join(getUserConfigPath(), config.TEMP_AUDIO_DIR)
+	fs := http.FileServer(http.Dir(tempAudioDir))
 	http.Handle("/temp_audio/", http.StripPrefix("/temp_audio/", fs))
 	go func() {
 		log.Printf("Running audio server at http://localhost:%s", config.SERVER_PORT)
@@ -109,7 +112,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get current person: %v", err)
 	}
-	lm, err := language.NewManager("pkg/language", appConfig.PersonaName, appConfig.Language)
+	langsPath := filepath.Join(getUserConfigPath(), "langs")
+	lm, err := language.NewManager(langsPath, appConfig.PersonaName, appConfig.Language)
 	if err != nil {
 		log.Fatalf("Failed to get current person: %v", err)
 	}
@@ -208,6 +212,12 @@ func setupCustomVariables(processor *variables.Processor, state *state.AppState)
 }
 
 func setupLogger() {
+	mode := ""
+	if appConfig.DEBUG {
+		mode = "_debug"
+	}
+	appConfig.DatabaseFile = filepath.Join(getUserConfigPath(), fmt.Sprintf("focus_helper_%s.db", mode))
+	appConfig.LogFile = filepath.Join(getUserConfigPath(), fmt.Sprintf("focus_helper_%s.log", mode))
 	f, err := os.OpenFile(appConfig.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatalf("Erro ao abrir arquivo de log: %v", err)
@@ -306,4 +316,50 @@ func formatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dm %ds", m, s)
 	}
 	return fmt.Sprintf("%ds", s)
+}
+
+func clearTempAudioOnExit() {
+	tempAudioDir := filepath.Join(getUserConfigPath(), config.TEMP_AUDIO_DIR)
+	if _, err := os.Stat(tempAudioDir); os.IsNotExist(err) {
+		log.Printf("Directory %s does not exist. Skipping deletion.", tempAudioDir)
+		return
+	}
+
+	defer func() {
+		err := os.RemoveAll(tempAudioDir)
+		if err != nil {
+			log.Printf("Error clearing temp_audio: %v", err)
+		} else {
+			fmt.Println("All files inside temp_audio have been cleared.")
+		}
+	}()
+
+	err := filepath.Walk(tempAudioDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			err := os.Remove(path)
+			if err != nil {
+				log.Printf("Failed to remove file: %v", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("Error clearing files in temp_audio: %v", err)
+	}
+}
+
+func getUserConfigPath() string {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatalf("Error getting user config directory: %v", err)
+	}
+	userConfigPath := filepath.Join(configDir, "focushelper")
+	err = os.MkdirAll(userConfigPath, 0755)
+	if err != nil {
+		log.Fatalf("Error creating user config directory: %v", err)
+	}
+	return userConfigPath
 }

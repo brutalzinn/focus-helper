@@ -10,7 +10,7 @@ import (
 func TestATCPersona_GetPrompt(t *testing.T) {
 	varProcessor := variables.NewProcessor()
 	atcPersona := NewATCPersona(varProcessor)
-	lm, err := language.NewManager("../../language", "atc_tower", "pt-br")
+	lm, err := language.NewManager("langs", "atc_tower", "pt-br")
 	if err != nil {
 		t.Fatalf("Failed to create language manager for test: %v", err)
 	}
