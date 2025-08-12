@@ -56,23 +56,26 @@ type MiscConfig struct {
 }
 
 type Config struct {
-	ProfileName               string       `json:"name"`
-	DEBUG                     bool         `json:"debug"`
-	TimeLocation              string       `json:"time_location"`
-	Language                  string       `json:"language"`
-	Username                  string       `json:"username"`
-	PersonaName               string       `json:"persona_name"`
-	IAModel                   IAModel      `json:"iamodel"`
-	IdleTimeout               Duration     `json:"idle_timeout"`
-	ActivityCheckRate         Duration     `json:"activity_check_rate"`
-	MinRandomQuestion         Duration     `json:"min_random_question"`
-	MaxRandomQuestion         Duration     `json:"max_random_question"`
-	ReduceOSSounds            bool         `json:"reduce_os_sounds"`
-	WellbeingQuestionsEnabled bool         `json:"wellbeing_questions_enabled"`
-	DatabaseFile              string       `json:"database_file"`
-	LogFile                   string       `json:"log_file"`
-	Misc                      MiscConfig   `json:"misc"`
-	AlertLevels               []AlertLevel `json:"alert_levels"`
+	ProfileName               string            `json:"name"`
+	HyperfocusAssociations    map[string]string `json:"hyperfocus_associations"`
+	DEBUG                     bool              `json:"debug"`
+	TimeLocation              string            `json:"time_location"`
+	Language                  string            `json:"language"`
+	HyperfocusMinDuration     Duration          `json:"hyperfocus_min_duration"`
+	Username                  string            `json:"username"`
+	PersonaName               string            `json:"persona_name"`
+	IAModel                   IAModel           `json:"iamodel"`
+	IdleTimeout               Duration          `json:"idle_timeout"`
+	ActivityCheckRate         Duration          `json:"activity_check_rate"`
+	MinRandomQuestion         Duration          `json:"min_random_question"`
+	MaxRandomQuestion         Duration          `json:"max_random_question"`
+	ReduceOSSounds            bool              `json:"reduce_os_sounds"`
+	IADetectorEnabled         bool              `json:"ia_detector_enabled"`
+	WellbeingQuestionsEnabled bool              `json:"wellbeing_questions_enabled"`
+	DatabaseFile              string            `json:"database_file"`
+	LogFile                   string            `json:"log_file"`
+	Misc                      MiscConfig        `json:"misc"`
+	AlertLevels               []AlertLevel      `json:"alert_levels"`
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) (err error) {

@@ -64,6 +64,7 @@ func DefaultProfile() models.Config {
 		MaxRandomQuestion:         models.Duration{Duration: 90 * time.Minute},
 		WellbeingQuestionsEnabled: true,
 		ReduceOSSounds:            true,
+		IADetectorEnabled:         false,
 		DatabaseFile:              "./focus_helper.db",
 		LogFile:                   "./focus_helper.log",
 		AlertLevels: []models.AlertLevel{

@@ -10,11 +10,13 @@ import (
 )
 
 func ApplyRadioFilter(inputFile, outputFile string) error {
+
 	cmd := exec.Command("sox", inputFile, "-r", "22050", "-c", "1", outputFile, "highpass", "300", "lowpass", "3000", "compand", "0.3,1", "6:-70,-60,-20", "-5", "-90", "0.2", "gain", "-n")
 	return commands.RunCommand(cmd)
 }
 
 func MixWithBackground(originalFilePath, backgroundAudioPath, finalOutputFile string, backgroundVolume float64, originalVolume float64) error {
+
 	tempBackgroundCropped := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR, "temp_background_cropped.wav")
 	defer os.Remove(tempBackgroundCropped)
 	duration, err := getAudioDuration(originalFilePath)

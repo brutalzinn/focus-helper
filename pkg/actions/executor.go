@@ -22,6 +22,7 @@ type ExecutorDependencies struct {
 	VarProcessor *variables.Processor
 	Notifier     notifications.Notifier
 	LLMAdapter   llm.LLMAdapter
+	AppState     *state.AppState
 }
 
 // Executor is responsible for executing all types of actions.
@@ -63,7 +64,7 @@ func (e *Executor) executeSpeakIAAction(action models.ActionConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to get persona: %w", err)
 	}
-	taskPrompt, _ := currentPersona.GetPrompt(state.Instance.Language, action.Prompt)
+	taskPrompt, _ := currentPersona.GetPrompt(e.deps.AppState.Language, action.Prompt)
 	finalText, err := e.deps.LLMAdapter.Generate(taskPrompt)
 	if err != nil {
 		log.Printf("WARNING: LLM generation failed, falling back to basic prompt: %v", err)
@@ -94,7 +95,7 @@ func (e *Executor) executeSpeakAction(action models.ActionConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to get persona: %w", err)
 	}
-	finalText, err := currentPersona.GetText(state.Instance.Language, action.Text)
+	finalText, err := currentPersona.GetText(e.deps.AppState.Language, action.Text)
 	if err != nil {
 		return fmt.Errorf("failed to get text persona: %w", err)
 	}

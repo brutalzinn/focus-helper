@@ -31,11 +31,10 @@ import (
 )
 
 var (
-	appConfig       models.Config
-	db              *sql.DB
-	activityMonitor *activity.Monitor
-	actionExecutor  *actions.Executor
-	notifier        notifications.Notifier
+	appConfig      models.Config
+	db             *sql.DB
+	actionExecutor *actions.Executor
+	notifier       notifications.Notifier
 )
 
 func main() {
@@ -55,12 +54,16 @@ func main() {
 	}
 	if *debugFlag {
 		cfg.DEBUG = true
-		cfg.MinRandomQuestion = models.Duration{Duration: (cfg.MinRandomQuestion.Duration / 2) * time.Second}
-		cfg.MaxRandomQuestion = models.Duration{Duration: (cfg.MaxRandomQuestion.Duration / 2) * time.Second}
+		log.Println("DEBUG mode enabled: Overriding time settings for faster testing.")
+		cfg.MinRandomQuestion = models.Duration{Duration: 5 * time.Second}
+		log.Printf("DEBUG: MinRandomQuestion set to %s", cfg.MinRandomQuestion.Duration)
+		cfg.MaxRandomQuestion = models.Duration{Duration: 10 * time.Second}
+		log.Printf("DEBUG: MaxRandomQuestion set to %s", cfg.MaxRandomQuestion.Duration)
 		for i := range cfg.AlertLevels {
-			cfg.AlertLevels[i].Threshold = models.Duration{Duration: (cfg.AlertLevels[i].Threshold.Duration / 2) * time.Second}
+			newThreshold := time.Duration((i+1)*10) * time.Second
+			cfg.AlertLevels[i].Threshold = models.Duration{Duration: newThreshold}
+			log.Printf("DEBUG: Alert level '%s' threshold set to %s", cfg.AlertLevels[i].Level, cfg.AlertLevels[i].Threshold.Duration)
 		}
-		log.Printf("WARNING: all times is set to half and converted to seconds.")
 	}
 
 	appConfig = *cfg
@@ -71,25 +74,37 @@ func main() {
 
 	if appConfig.DEBUG {
 		log.Println("!!!!!!!!!! RUNNING IN DEBUG MODE !!!!!!!!!!")
+		log.Println("WARNING: all times is set to half and converted to seconds.")
+		appConfig.DatabaseFile = filepath.Join("focus_helper_debug.db")
 	}
-
 	db, err = database.Init(appConfig.DatabaseFile)
 	if err != nil {
 		log.Fatalf("Fail to start database: %v", err)
 	}
 	defer db.Close()
 
-	activityMonitor = activity.NewMonitor()
 	notifier = notifications.NewDesktopNotifier()
-
 	llmAdapter, err := llm.NewAdapter(appConfig.IAModel)
 	if err != nil {
 		log.Fatalf("Fail to start LLM adapter: %v", err)
 	}
 	variablesProcessor := variables.NewProcessor()
-
+	currentPersona, err := persona.GetPersona(appConfig.PersonaName, variablesProcessor)
+	if err != nil {
+		log.Fatalf("Failed to get current person: %v", err)
+	}
+	langsPath := filepath.Join(config.GetUserConfigPath(), "langs")
+	lm, err := language.NewManager(langsPath, appConfig.PersonaName, appConfig.Language)
+	if err != nil {
+		log.Fatalf("Failed to get current person: %v", err)
+	}
+	appState := state.NewAppState()
+	appState.Persona = currentPersona
+	appState.Language = lm
+	appState.LLMAdapter = &llmAdapter
 	executorDeps := actions.ExecutorDependencies{
 		AppConfig:    &appConfig,
+		AppState:     appState,
 		VarProcessor: variablesProcessor,
 		Notifier:     notifier,
 		LLMAdapter:   llmAdapter,
@@ -107,33 +122,23 @@ func main() {
 			log.Fatalf("Fail to start audio server: %v", err)
 		}
 	}()
-
-	currentPersona, err := persona.GetPersona(appConfig.PersonaName, variablesProcessor)
-	if err != nil {
-		log.Fatalf("Failed to get current person: %v", err)
+	activityMonitorDeps := activity.MonitorDependencies{
+		DB:             db,
+		ActionExecutor: actionExecutor,
+		AppState:       appState,
+		AppConfig:      &appConfig,
 	}
-	langsPath := filepath.Join(config.GetUserConfigPath(), "langs")
-	lm, err := language.NewManager(langsPath, appConfig.PersonaName, appConfig.Language)
-	if err != nil {
-		log.Fatalf("Failed to get current person: %v", err)
-	}
-	state.Instance = &state.AppState{
-		LastActivityTime:         time.Now(),
-		ContinuousUsageStartTime: time.Now(),
-		WarnedThresholds:         make(map[time.Duration]bool),
-		Persona:                  currentPersona,
-		Language:                 lm,
-	}
-	go monitorActivityLoop(state.Instance)
+	activityMonitor := activity.NewMonitor(activityMonitorDeps)
+	go activityMonitor.MonitorActivityLoop()
 	if appConfig.WellbeingQuestionsEnabled {
 		go schedulerLoop()
 	} else {
 		log.Println("Questions disabled.")
 	}
-	setupCustomVariables(variablesProcessor, state.Instance)
+	setupCustomVariables(variablesProcessor, appState)
 	welcomeAction := models.ActionConfig{
 		Type: config.ActionSpeak,
-		Text: state.Instance.Language.Get("hello_prompt"),
+		Text: appState.Language.Get("hello_prompt"),
 	}
 	go actionExecutor.Execute(welcomeAction)
 	select {}
@@ -212,51 +217,17 @@ func setupCustomVariables(processor *variables.Processor, state *state.AppState)
 }
 
 func setupLogger() {
-	mode := ""
+
 	if appConfig.DEBUG {
-		mode = "_debug"
+		appConfig.LogFile = filepath.Join("focus_helper_debug.log")
 	}
-	appConfig.DatabaseFile = filepath.Join(config.GetUserConfigPath(), fmt.Sprintf("focus_helper_%s.db", mode))
-	appConfig.LogFile = filepath.Join(config.GetUserConfigPath(), fmt.Sprintf("focus_helper_%s.log", mode))
+
 	f, err := os.OpenFile(appConfig.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatalf("Erro ao abrir arquivo de log: %v", err)
 	}
 	multiWriter := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(multiWriter)
-}
-
-func monitorActivityLoop(state *state.AppState) {
-	ticker := time.NewTicker(appConfig.ActivityCheckRate.Duration)
-	defer ticker.Stop()
-	for range ticker.C {
-		isIdle := time.Since(state.LastActivityTime) > appConfig.IdleTimeout.Duration
-		if activityMonitor.HasActivity() {
-			if isIdle {
-				resetState(state)
-			}
-			state.LastActivityTime = time.Now()
-		}
-		if isIdle {
-			continue
-		}
-		usageDuration := time.Since(state.ContinuousUsageStartTime)
-		for _, alertLevel := range appConfig.AlertLevels {
-			if alertLevel.Enabled && usageDuration >= alertLevel.Threshold.Duration && !state.WarnedThresholds[alertLevel.Threshold.Duration] {
-				log.Printf("[WARNING]HYPERFOCUS DETECTED: %s (duracao: %v)", alertLevel.Level, usageDuration)
-				if state.Hyperfocus == nil || state.Hyperfocus.Level != alertLevel.Level {
-					state.Hyperfocus = &models.HyperfocusState{
-						Level:     alertLevel.Level,
-						StartTime: time.Now(),
-					}
-				}
-				for _, action := range alertLevel.Actions {
-					go actionExecutor.Execute(action)
-				}
-				state.WarnedThresholds[alertLevel.Threshold.Duration] = true
-			}
-		}
-	}
 }
 
 func schedulerLoop() {
@@ -290,20 +261,6 @@ func askWellbeingQuestion() {
 		}
 		database.LogWellbeingCheck(db, questionText, answer)
 	}()
-}
-
-func resetState(state *state.AppState) {
-	log.Println("User is back. Reset app state.")
-	now := time.Now()
-	state.ContinuousUsageStartTime = now
-	state.LastActivityTime = now
-	state.WarnedThresholds = make(map[time.Duration]bool)
-	state.Hyperfocus = nil
-	action := models.ActionConfig{
-		Type:   config.ActionSpeakIA,
-		Prompt: "Informe ao %username% que ele retornou da ociosidade e que seus contadores foram reiniciados.",
-	}
-	go actionExecutor.Execute(action)
 }
 
 func formatDuration(d time.Duration) string {

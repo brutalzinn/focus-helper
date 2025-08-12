@@ -74,15 +74,16 @@ func playSoundAmplified(filename string, volume float64) error {
 	case "darwin":
 		originalVolume, err = getSystemVolumeMac()
 		if err != nil {
-			originalVolume = "75"
+			log.Println("Could not get current volume, defaulting to 100%")
+			originalVolume = "100"
 		}
 		lowerVolumeCmd = exec.Command("osascript", "-e", "set volume output volume 20")
 		restoreVolumeCmd = exec.Command("osascript", "-e", "set volume output volume "+originalVolume)
 
 	case "windows":
-		originalVolume = "80%"                                                 // for logging
-		lowerVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "13107")   // ~20%
-		restoreVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "52428") // ~80%
+		originalVolume = "80%"
+		lowerVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "13107")
+		restoreVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "52428")
 
 	case "linux":
 		sink, err := commands.GetDefaultSinkName()
@@ -101,37 +102,15 @@ func playSoundAmplified(filename string, volume float64) error {
 	default:
 		return fmt.Errorf("unsupported OS for this method: %s", runtime.GOOS)
 	}
-
 	if err := commands.RunCommand(lowerVolumeCmd); err != nil {
 		log.Println("Could not lower system volume, playing normally.")
-		return playFile(filename, 1.0)
+		return playFile(filename, volume)
 	}
 	defer func() {
-		// log.Printf("Restoring system volume to: %s", originalVolume)
+		log.Printf("Restoring system volume to: %s", originalVolume)
 		commands.RunCommand(restoreVolumeCmd)
 	}()
 	return playFile(filename, volume)
-}
-
-func playSoundIsolatedLinux(filename string, volume float64) error {
-	originalVolume, err := getSystemVolumeLinux()
-	if err != nil {
-		originalVolume = "100%"
-		log.Println("Could not get current volume, defaulting to 100%")
-	}
-
-	if err := commands.RunCommand(exec.Command("pactl", "set-sink-volume", "@DEFAULT_SINK@", "20%")); err != nil {
-		log.Println("Failed to lower system volume:", err)
-	}
-
-	defer func() {
-		time.Sleep(100 * time.Millisecond)
-		if err := commands.RunCommand(exec.Command("pactl", "set-sink-volume", "@DEFAULT_SINK@", originalVolume)); err != nil {
-			log.Println("Failed to restore system volume:", err)
-		}
-	}()
-
-	return playSoundAmplified(filename, volume)
 }
 
 func GetAssetPath(filename string) string {

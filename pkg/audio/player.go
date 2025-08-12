@@ -1,7 +1,6 @@
 package audio
 
 import (
-	"runtime"
 	"sync"
 	"time"
 
@@ -35,17 +34,6 @@ func PlaySound(filePath string, volume float64) error {
 	if volume <= 0 {
 		volume = 1.0
 	}
-	err := playPrioritySound(filePath, volume)
+	err := playSoundAmplified(filePath, volume)
 	return err
-}
-
-func playPrioritySound(filename string, volume float64) error {
-	switch runtime.GOOS {
-	case "linux":
-		return playSoundIsolatedLinux(filename, volume)
-	case "darwin", "windows":
-		return playSoundAmplified(filename, volume)
-	default:
-		return playFile(filename, 1.0)
-	}
 }

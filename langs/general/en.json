@@ -40,5 +40,6 @@
     "12": "twelve"
   },
   "debug_on": "debug mode",
-  "debug_off": "debug mode disabled"
+  "debug_off": "debug mode disabled",
+  "detector_prompt": "You are a Hyperfocus Analyst. Your task is to analyze the user's computer activity and determine the correct intervention level.\nThere are %d available alert levels, indexed from 0 to %d.\n- Index 0 is the gentlest warning.\n- Index %d is the most critical emergency intervention.\n\nBased on the user's history, their currently focused application, and how long they have been active, you must return a single number representing the appropriate alert index. If no alert is needed, return -1."
 }
