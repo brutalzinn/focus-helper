@@ -65,10 +65,27 @@ func (k *KittPersona) ProcessAudio(text string) error {
 	return nil
 }
 
-func (k *KittPersona) GetDisplayWarn(context string) (*DisplayContent, error) {
+func (k *KittPersona) GetDisplayWarn(text string) (*DisplayContent, error) {
+	timestamp := time.Now().UnixNano()
+	originalFilePath := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s.wav", timestamp, k.GetName()))
+	finalFilePath := filepath.Join(config.GetUserConfigPath(), config.TEMP_AUDIO_DIR, fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, k.GetName()))
+	// defer func() {
+	// 	_ = os.Remove(originalFilePath)
+	// 	_ = os.Remove(finalFilePath)
+	// }()
+	piperCmd := exec.Command("piper", "--model", VOICE_MODEL, "--output_file", originalFilePath)
+	piperCmd.Stdin = bytes.NewBufferString(text)
+	if err := commands.RunCommand(piperCmd); err != nil {
+		return nil, fmt.Errorf("piper TTS failed: %w", err)
+	}
+	if err := audio.ApplyRadioFilter(originalFilePath, finalFilePath); err != nil {
+		return nil, err
+	}
+	finalAudioName := fmt.Sprintf("%d_%s_temp_filter.wav", timestamp, k.GetName())
+	encodedAudioURL := fmt.Sprintf("http://localhost:8088/assets/displays/kitt/index.html?audio_url=/temp_audio/%s", finalAudioName)
 	return &DisplayContent{
 		Type:    "html_dialog",
-		Value:   "kitt/index.html",
+		Value:   encodedAudioURL,
 		Options: map[string]any{"width": 400, "height": 180, "title": "K.I.T.T. Voice Module"},
 	}, nil
 }

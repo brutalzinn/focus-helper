@@ -53,6 +53,8 @@ func (activityMonitor *Monitor) MonitorActivityLoop() {
 				if alertIndex != -1 && !activityMonitor.deps.AppState.WarnedIndexes[alertIndex] {
 					alertLevel := activityMonitor.deps.AppConfig.AlertLevels[alertIndex]
 					log.Printf("[WARNING] HYPERFOCUS DETECTED: Level %s (Index %d, Duration: %v)", alertLevel.Level, alertIndex, usageDuration.Round(time.Second))
+					subject := DetectSubject(activityMonitor.deps.AppConfig.HyperfocusAssociations)
+					database.LogHyperfocusEvent(activityMonitor.deps.DB, alertIndex, alertLevel.Threshold.Duration, subject)
 					if activityMonitor.deps.AppState.Hyperfocus == nil || activityMonitor.deps.AppState.Hyperfocus.Level != alertLevel.Level {
 						activityMonitor.deps.AppState.Hyperfocus = &models.HyperfocusState{
 							Level:     alertLevel.Level,
@@ -111,9 +113,11 @@ func (m Monitor) progressiveTimeCheck(usageDuration time.Duration) int {
 	}
 	return highestIndex
 }
+
 func (m Monitor) isIdle() bool {
 	return time.Since(m.deps.AppState.LastActivityTime) > m.deps.AppConfig.IdleTimeout.Duration
 }
+
 func (m Monitor) resetState() {
 	log.Println("User is back. Reset app activityMonitor.deps.AppState.")
 	now := time.Now()

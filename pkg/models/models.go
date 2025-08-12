@@ -31,11 +31,10 @@ type ActionConfig struct {
 }
 
 type AlertLevel struct {
-	Enabled    bool           `json:"enabled"`
-	Level      string         `json:"level"`
-	Multiplier float64        `json:"multiplier,omitempty"`
-	Threshold  Duration       `json:"threshold"`
-	Actions    []ActionConfig `json:"actions"`
+	Enabled   bool           `json:"enabled"`
+	Level     string         `json:"level"`
+	Threshold Duration       `json:"threshold"`
+	Actions   []ActionConfig `json:"actions"`
 }
 
 type IAModel struct {

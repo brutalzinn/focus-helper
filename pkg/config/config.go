@@ -21,6 +21,7 @@ const (
 const (
 	SERVER_PORT    = "8088"
 	TEMP_AUDIO_DIR = "temp_audio"
+	ASSETS_DIR     = "assets"
 )
 
 func LoadProfiles(filename string) ([]models.Config, error) {
@@ -78,10 +79,9 @@ func DefaultProfile() models.Config {
 				},
 			},
 			{
-				Enabled:    true,
-				Level:      "medium",
-				Threshold:  models.Duration{Duration: 90 * time.Minute},
-				Multiplier: 1.5,
+				Enabled:   true,
+				Level:     "medium",
+				Threshold: models.Duration{Duration: 90 * time.Minute},
 				Actions: []models.ActionConfig{
 					{Type: ActionSound, SoundFile: "autopilot.mp3"},
 					{Type: ActionSpeakIA, Prompt: "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."},
@@ -91,8 +91,6 @@ func DefaultProfile() models.Config {
 				Enabled:   true,
 				Level:     "high",
 				Threshold: models.Duration{Duration: 2*time.Hour + 30*time.Minute},
-
-				Multiplier: 2.5,
 				Actions: []models.ActionConfig{
 					{Type: ActionSound, SoundFile: "alert_level_3.mp3"},
 					{Type: ActionPopup, PopupTitle: "Alerta de Foco Intenso", PopupMessage: "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."},
@@ -100,10 +98,9 @@ func DefaultProfile() models.Config {
 				},
 			},
 			{
-				Enabled:    true,
-				Level:      "CRITICAL",
-				Threshold:  models.Duration{Duration: 4 * time.Hour},
-				Multiplier: 5.0,
+				Enabled:   true,
+				Level:     "CRITICAL",
+				Threshold: models.Duration{Duration: 4 * time.Hour},
 				Actions: []models.ActionConfig{
 					{Type: ActionSpeakIA, Prompt: "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."},
 				},

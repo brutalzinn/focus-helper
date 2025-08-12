@@ -45,7 +45,7 @@ func (n *DesktopNotifier) Notify(title, message string) error {
 	return beeep.Alert(title, message, "")
 }
 
-// func OpenWebViewDialog(displayContent *persona.DisplayContent, audioURL string) {
+// func OpenWebViewDialog(displayContent *persona.DisplayContent) {
 // 	// htmlPath, err := filepath.Abs(filepath.Join(displayAssetPath, displayContent.Value))
 // 	// if err != nil {
 // 	// 	log.Printf("ERROR: Could not get absolute path for display file: %v", err)
@@ -54,18 +54,18 @@ func (n *DesktopNotifier) Notify(title, message string) error {
 
 // 	// finalURL := fmt.Sprintf("file://%s?audioURL=%s", htmlPath, url.QueryEscape(audioURL))
 
-// 	width := getIntOption(displayContent.Options, "width", 400)
-// 	height := getIntOption(displayContent.Options, "height", 180)
+// 	// width := getIntOption(displayContent.Options, "width", 400)
+// 	// height := getIntOption(displayContent.Options, "height", 180)
 // 	title := getStringOption(displayContent.Options, "title", "Focus Helper")
 
-// 	log.Printf("WEBVIEW: Creating window ('%s', %dx%d) with URL: %s", title, width, height)
+// 	// log.Printf("WEBVIEW: Creating window ('%s', %dx%d) with URL: %s", title, width, height)
 
-// 	w := webview.New(true)
+// 	w := webview.New(false)
 // 	defer w.Destroy()
 
 // 	w.SetTitle(title)
-// 	w.SetSize(width, height, 0)
-// 	w.Navigate(audioURL)
+// 	// w.SetSize(width, height, 0)
+// 	w.Navigate(displayContent.Value)
 // 	w.Run()
 // 	log.Println("WEBVIEW: Window closed.")
 // }

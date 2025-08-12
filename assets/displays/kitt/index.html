@@ -1,139 +1,231 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>KITT Voice Box</title>
+<meta charset="UTF-8">
+<title>K.I.T.T. Voice Meter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-  html, body {
-    margin: 0; padding: 0;
-    height: 100%;
-    background-color: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-family: sans-serif;
-    flex-direction: column;
-  }
-  .voicebox-container {
-    display: flex;
-    align-items: flex-end;
-    height: 150px;
-    width: 60%;
-    gap: 6px;
-    margin-top: 20px;
-    visibility: hidden; /* Hide initially */
-  }
-  .voicebox-bar {
-    flex: 1;
-    background: #ff0202;
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(255, 2, 2, 0.7);
-    transform-origin: bottom;
-    transform: scaleY(0);
-    transition: transform 0.05s linear, box-shadow 0.1s linear;
-  }
-  button {
-    padding: 12px 30px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    background: #ff0000;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    box-shadow: 0 0 15px #ff0000;
-    transition: background 0.3s ease;
-  }
-  button:hover {
-    background: #cc0000;
-  }
+    body {
+        font-family: 'Orbitron', sans-serif;
+        background-color: #000;
+        color: #ff0000;
+        overflow: hidden;
+    }
+    .canvas-container {
+        background-color: #111;
+        border: 2px solid #444;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: inset 0 0 15px #000;
+    }
+    canvas {
+        background-color: #000;
+        border: 1px solid #333;
+    }
+    .control-button {
+        background-color: #330000;
+        border: 2px solid #ff0000;
+        color: #ff0000;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 5px #ff0000;
+    }
+    .control-button:hover:not(:disabled) {
+        background-color: #ff0000;
+        color: #000;
+        box-shadow: 0 0 20px #ff0000;
+    }
+    .control-button:disabled {
+        background-color: #220000;
+        color: #660000;
+        border-color: #660000;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    .title-glow {
+        text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+    }
+    #audioUrlInput {
+        background-color: #222;
+        border: 1px solid #555;
+        color: #eee;
+    }
 </style>
 </head>
-<body>
-  <button id="playBtn">▶️ Tocar Áudio</button>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-  <div id="kitt-voicebox" class="voicebox-container">
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-    <div class="voicebox-bar"></div>
-  </div>
+<h1 class="text-2xl md:text-4xl font-bold mb-4 title-glow">K.I.T.T. VOICE MODULATOR</h1>
 
-  <script>
-    const playBtn = document.getElementById('playBtn');
-    const voicebox = document.getElementById('kitt-voicebox');
+<div class="w-full max-w-md flex flex-col sm:flex-row gap-2 mb-4">
+    <input type="text" id="audioUrlInput" placeholder="Audio URL" class="flex-grow px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+    <button id="loadButton" class="control-button px-4 py-2 rounded-lg font-bold">LOAD</button>
+</div>
 
-    playBtn.onclick = () => {
-      const params = new URLSearchParams(window.location.search);
-      const audioUrl = params.get('audioURL');
-      if (!audioUrl) {
-        alert('Erro: parâmetro audioURL não fornecido.');
+<div id="voice-meter-container" class="w-full max-w-sm mx-auto mb-4 canvas-container">
+    <canvas id="voiceMeter" width="300" height="200"></canvas>
+</div>
+
+<button id="playPauseButton" class="control-button px-6 py-3 rounded-lg font-bold text-lg" disabled>
+    PLAY
+</button>
+
+<p id="errorMessage" class="mt-4 text-sm text-yellow-400 h-5"></p>
+
+<audio id="audioPlayer" crossOrigin="anonymous"></audio>
+
+<script>
+const canvas = document.getElementById('voiceMeter');
+const ctx = canvas.getContext('2d');
+const audioUrlInput = document.getElementById('audioUrlInput');
+const loadButton = document.getElementById('loadButton');
+const playPauseButton = document.getElementById('playPauseButton');
+const errorMessage = document.getElementById('errorMessage');
+const audioPlayer = document.getElementById('audioPlayer');
+
+let audioContext, analyser, source, animationFrameId;
+let isPlaying = false;
+let isInitialized = false;
+
+const numSegments = 16;
+const litColor = '#ff0000';
+const unlitColor = '#330000';
+const glowColor = 'rgba(255, 0, 0, 0.7)';
+const numBars = 3;
+
+// Load audio
+function loadAudioFromUrl(url, autoPlay = false) {
+    if (!url) {
+        errorMessage.textContent = 'No audio URL provided.';
         return;
-      }
-
-      // Hide button and show voicebox
-      playBtn.style.display = 'none';
-      voicebox.style.visibility = 'visible';
-
-      startVoicebox(audioUrl);
-    };
-
-    function startVoicebox(audioUrl) {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const bars = document.querySelectorAll('.voicebox-bar');
-
-      fetch(audioUrl)
-        .then(res => res.arrayBuffer())
-        .then(buffer => audioCtx.decodeAudioData(buffer))
-        .then(decodedData => {
-          const source = audioCtx.createBufferSource();
-          source.buffer = decodedData;
-          source.connect(analyser);
-          analyser.connect(audioCtx.destination);
-
-          // Resume context on gesture (required by browser policies)
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
-
-          source.start();
-
-          function animate() {
-            requestAnimationFrame(animate);
-            analyser.getByteFrequencyData(dataArray);
-
-            let sum = 0;
-            for (let i = 0; i < bufferLength; i++) {
-              sum += dataArray[i];
-            }
-            const avg = sum / bufferLength;
-            const baseScale = Math.min(avg / 120, 1);
-
-            bars.forEach((bar, idx) => {
-              const scale = baseScale * (0.7 + 0.3 * Math.sin(Date.now() * 0.005 + idx));
-              bar.style.transform = `scaleY(${scale})`;
-              const glow = 8 + scale * 20;
-              const opacity = 0.3 + scale * 0.7;
-              bar.style.boxShadow = `0 0 ${glow}px rgba(255, 2, 2, ${opacity})`;
-            });
-          }
-          animate();
-        })
-        .catch(err => {
-          alert(`Erro ao carregar áudio: ${err.message}`);
-          console.error(err);
-        });
     }
-  </script>
+    try {
+        audioUrlInput.value = url;
+        audioPlayer.src = url;
+        audioPlayer.load();
+        playPauseButton.disabled = true;
+        playPauseButton.textContent = 'LOADING...';
+        errorMessage.textContent = '';
+        if (autoPlay) {
+            audioPlayer.addEventListener("canplaythrough", () => {
+                playPauseButton.click();
+            }, { once: true });
+        }
+    } catch (err) {
+        errorMessage.textContent = 'Invalid audio URL.';
+        console.error(err);
+    }
+}
+
+// Initialize Web Audio API
+function initializeAudio() {
+    if (isInitialized) return;
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    source = audioContext.createMediaElementSource(audioPlayer);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 128;
+    analyser.smoothingTimeConstant = 0.7;
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    isInitialized = true;
+}
+
+// Animation loop
+function animationLoop() {
+    if (!analyser) return;
+    const array = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(array);
+    drawVoiceMeter(array);
+    animationFrameId = requestAnimationFrame(animationLoop);
+}
+
+function drawVoiceMeter(array) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let overallVolume = array.reduce((sum, value) => sum + value, 0) / array.length;
+    overallVolume = Math.pow(overallVolume / 128, 0.6) * 128;
+    const totalBarWidth = canvas.width / (numBars + 1);
+    const barWidth = totalBarWidth * 0.7;
+    const segmentHeight = canvas.height / numSegments;
+    const segmentGap = segmentHeight * 0.25;
+
+    for (let i = 0; i < numBars; i++) {
+        let barVolume = (i === 1) ? overallVolume : overallVolume * 0.8;
+        const segmentsToLight = Math.min(numSegments, Math.round((barVolume / 140) * numSegments));
+        const x = totalBarWidth / 2 + i * totalBarWidth;
+        for (let j = 0; j < numSegments; j++) {
+            const y = canvas.height - (j + 1) * segmentHeight + segmentGap / 2;
+            const segmentActualHeight = segmentHeight - segmentGap;
+            ctx.fillStyle = j < segmentsToLight ? litColor : unlitColor;
+            ctx.shadowBlur = j < segmentsToLight ? 10 : 0;
+            ctx.shadowColor = glowColor;
+            ctx.fillRect(x, y, barWidth, segmentActualHeight);
+        }
+    }
+    ctx.shadowBlur = 0;
+}
+
+function drawStatic() {
+    drawVoiceMeter(new Uint8Array(64).fill(0));
+}
+
+function resizeCanvas() {
+    const container = document.getElementById('voice-meter-container');
+    const size = Math.min(container.offsetWidth, 400);
+    canvas.width = size;
+    canvas.height = size * 0.66;
+    drawStatic();
+}
+window.addEventListener('resize', resizeCanvas);
+
+// Event handlers
+loadButton.addEventListener('click', () => loadAudioFromUrl(audioUrlInput.value.trim()));
+playPauseButton.addEventListener('click', () => {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    if (!isInitialized) {
+        initializeAudio();
+    }
+    isPlaying ? audioPlayer.pause() : audioPlayer.play();
+});
+audioPlayer.addEventListener('canplaythrough', () => {
+    playPauseButton.disabled = false;
+    playPauseButton.textContent = 'PLAY';
+    errorMessage.textContent = 'Audio loaded. Press Play.';
+});
+audioPlayer.addEventListener('error', () => {
+    playPauseButton.disabled = true;
+    playPauseButton.textContent = 'PLAY';
+    errorMessage.textContent = 'Error loading audio. Check URL or CORS.';
+});
+audioPlayer.addEventListener('play', () => {
+    isPlaying = true;
+    playPauseButton.textContent = 'PAUSE';
+    animationLoop();
+});
+audioPlayer.addEventListener('pause', () => {
+    isPlaying = false;
+    playPauseButton.textContent = 'PLAY';
+    cancelAnimationFrame(animationFrameId);
+});
+audioPlayer.addEventListener('ended', () => {
+    isPlaying = false;
+    playPauseButton.textContent = 'PLAY';
+    cancelAnimationFrame(animationFrameId);
+    drawStatic();
+});
+
+// Auto-load from query param
+window.addEventListener('load', () => {
+    resizeCanvas();
+    const urlParams = new URLSearchParams(window.location.search);
+    const audioUrl = urlParams.get('audio_url');
+    if (audioUrl) {
+        loadAudioFromUrl(decodeURIComponent(audioUrl), true); 
+    }
+});
+</script>
 </body>
 </html>

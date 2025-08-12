@@ -114,8 +114,12 @@ func main() {
 	if err := os.MkdirAll(tempAudioDir, 0755); err != nil {
 		log.Fatalf("Failed to create temp audio directory: %v", err)
 	}
-	fs := http.FileServer(http.Dir(tempAudioDir))
-	http.Handle("/temp_audio/", http.StripPrefix("/temp_audio/", fs))
+	assetsDir := filepath.Join(config.GetUserConfigPath(), config.ASSETS_DIR)
+	if err := os.MkdirAll(tempAudioDir, 0755); err != nil {
+		log.Fatalf("Failed to create temp audio directory: %v", err)
+	}
+	http.Handle("/temp_audio/", http.StripPrefix("/temp_audio/", http.FileServer(http.Dir(tempAudioDir))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsDir))))
 	go func() {
 		log.Printf("Running audio server at http://localhost:%s", config.SERVER_PORT)
 		if err := http.ListenAndServe(":"+config.SERVER_PORT, nil); err != nil {

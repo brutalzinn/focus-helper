@@ -116,6 +116,18 @@
         "max_random_question": "90m",
         "reduce_os_sounds": true,
         "wellbeing_questions_enabled": false,
+        "hyperfocus_associations": {
+               "PHPStorm": "Programação",
+                "Visual Studio Code": "Programação",
+                "GoLand": "Programação",
+                "IntelliJ IDEA": "Programação",
+                "Figma": "Design",
+                "Photoshop": "Design",
+                "Terminal": "Sistema/DevOps",
+                "iTerm": "Sistema/DevOps",
+                "Google Chrome": "Navegação/Pesquisa",
+                "Firefox": "Navegação/Pesquisa"
+        },
         "alert_levels": [
             {
                 "enabled": true,

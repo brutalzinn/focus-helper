@@ -1,14 +1,12 @@
 package audio
 
 import (
-	"sync"
 	"time"
 
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/speaker"
 )
 
-var audioMutex sync.Mutex
 var audioInitialized bool
 
 func InitSpeaker() {
@@ -26,8 +24,7 @@ func IsReady() bool {
 }
 
 func PlaySound(filePath string, volume float64) error {
-	audioMutex.Lock()
-	defer audioMutex.Unlock()
+
 	// if !IsReady() {
 	// 	return nil
 	// }

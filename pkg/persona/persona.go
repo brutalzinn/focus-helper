@@ -31,6 +31,7 @@ type Persona interface {
 	GetPrompt(lm *language.LanguageManager, context string) (string, error)
 
 	GetText(lm *language.LanguageManager, context string) (string, error)
+
 	ProcessAudio(prompt string) error
 }
 

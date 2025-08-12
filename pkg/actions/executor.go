@@ -5,6 +5,7 @@ package actions
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"focus-helper/pkg/audio"
 	"focus-helper/pkg/config"
@@ -30,6 +31,8 @@ type Executor struct {
 	deps ExecutorDependencies
 }
 
+var mutex sync.Mutex
+
 // NewExecutor creates a new action executor.
 func NewExecutor(deps ExecutorDependencies) *Executor {
 	return &Executor{deps: deps}
@@ -38,13 +41,13 @@ func NewExecutor(deps ExecutorDependencies) *Executor {
 // Execute takes an action config and performs the corresponding action.
 func (e *Executor) Execute(action models.ActionConfig) error {
 	log.Printf("EXECUTING ACTION: Type=%s", action.Type)
-
+	mutex.Lock()
+	defer mutex.Unlock()
 	switch action.Type {
 	case config.ActionSound:
 		return audio.PlaySound(audio.GetAssetPath(action.SoundFile), 1.0)
 
 	case config.ActionPopup:
-		// Using the injected Notifier interface
 		_, err := e.deps.Notifier.Question(action.PopupTitle, action.PopupMessage)
 		return err
 
@@ -73,13 +76,11 @@ func (e *Executor) executeSpeakIAAction(action models.ActionConfig) error {
 	if err != nil {
 		log.Printf("error on processing audio: %v", err)
 	}
-
 	// if visualPersona, ok := currentPersona.(persona.VisualPersona); ok {
 	// 	displayContent, _ := visualPersona.GetDisplayWarn(finalText)
 	// 	if displayContent != nil && displayContent.Type == "html_dialog" {
-	// 		audioURL := fmt.Sprintf("http://localhost:8088/audio/%s", rawFileName)
-	// 		notifications.OpenWebViewDialog(displayContent, audioURL)
-	// 		log.Printf("VISUAL TRIGGER: Opening dialog '%s' with URL '%s'", displayContent.Value, audioURL)
+	// 		log.Printf("VISUAL TRIGGER: Opening dialog '%s' with URL '%s'", displayContent.Value)
+	// 		notifications.OpenWebViewDialog(displayContent)
 	// 		return nil
 	// 	}
 	// }
@@ -87,10 +88,6 @@ func (e *Executor) executeSpeakIAAction(action models.ActionConfig) error {
 }
 
 func (e *Executor) executeSpeakAction(action models.ActionConfig) error {
-	// lm, err := e.deps.LangManager("pkg/language", e.deps.AppConfig.PersonaName, config.AppConfig.Language)
-	// if err != nil {
-	// 	return fmt.Errorf("could not load language: %w", err)
-	// }
 	currentPersona, err := persona.GetPersona(e.deps.AppConfig.PersonaName, e.deps.VarProcessor)
 	if err != nil {
 		return fmt.Errorf("failed to get persona: %w", err)
