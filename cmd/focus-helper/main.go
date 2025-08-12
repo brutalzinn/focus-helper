@@ -126,6 +126,7 @@ func main() {
 		DB:             db,
 		ActionExecutor: actionExecutor,
 		AppState:       appState,
+		LLMAdapter:     llmAdapter,
 		AppConfig:      &appConfig,
 	}
 	activityMonitor := activity.NewMonitor(activityMonitorDeps)
