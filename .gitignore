@@ -11,3 +11,4 @@
 *.sqlite
 *.log
 /temp_audio
+/whisper.cpp

@@ -41,8 +41,7 @@ func NewExecutor(deps ExecutorDependencies) *Executor {
 // Execute takes an action config and performs the corresponding action.
 func (e *Executor) Execute(action models.ActionConfig) error {
 	log.Printf("EXECUTING ACTION: Type=%s", action.Type)
-	mutex.Lock()
-	defer mutex.Unlock()
+
 	switch action.Type {
 	case config.ActionSound:
 		return audio.PlaySound(audio.GetAssetPath(action.SoundFile), 1.0)

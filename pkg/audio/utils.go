@@ -110,7 +110,7 @@ func playSoundAmplified(filename string, volume float64) error {
 		log.Printf("Restoring system volume to: %s", originalVolume)
 		commands.RunCommand(restoreVolumeCmd)
 	}()
-	return playFile(filename, volume)
+	return playFile(filename, 2.0)
 }
 
 func GetAssetPath(filename string) string {

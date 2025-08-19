@@ -35,10 +35,10 @@ func Init(filepath string) (*sql.DB, error) {
 	);
 	CREATE TABLE IF NOT EXISTS hyperfocus_events (
 		id INTEGER PRIMARY KEY,
-		timestamp DATETIME NOT NULL,
 		alert_level INTEGER NOT NULL,
-		alert_threshold_seconds INTEGER NOT NULL,
-		subject TEXT NOT NULL
+		subject TEXT NOT NULL,
+		duration_seconds INTEGER NOT NULL,
+		createAt DATETIME NOT NULL
 	);
 	CREATE TABLE IF NOT EXISTS mayday_events (
 		id INTEGER PRIMARY KEY,
@@ -70,6 +70,7 @@ func LogWellbeingCheck(db *sql.DB, question, answer string) {
 
 func LogHyperfocusSession(db *sql.DB, startTime, endTime time.Time, subject string) {
 	duration := int(endTime.Sub(startTime).Seconds())
+	log.Printf("Hyperfocus session logged: Subject='%s', Duration=%d seconds", subject, duration)
 	stmt, err := db.Prepare("INSERT INTO hyperfocus_sessions(start_time, end_time, duration_seconds, subject) VALUES(?, ?, ?, ?)")
 	if err != nil {
 		log.Printf("Error preparing statement for hyperfocus session: %v", err)
@@ -79,26 +80,25 @@ func LogHyperfocusSession(db *sql.DB, startTime, endTime time.Time, subject stri
 
 	if _, err := stmt.Exec(startTime, endTime, duration, subject); err != nil {
 		log.Printf("Error inserting hyperfocus session: %v", err)
-	} else {
-		log.Printf("Hyperfocus session logged: Subject='%s', Duration=%d seconds", subject, duration)
 	}
 }
 
-func LogHyperfocusEvent(db *sql.DB, level int, threshold time.Duration, subject string) {
-	stmt, err := db.Prepare("INSERT INTO hyperfocus_events(timestamp, alert_level, alert_threshold_seconds, subject) VALUES(?, ?, ?, ?)")
+func LogHyperfocusEvent(db *sql.DB, level int, startTime, endTime time.Time, subject string) {
+	log.Printf("[DB]Insert Hyperfocus Event Level %d logged for subject: '%s'", level, subject)
+	duration := int(endTime.Sub(startTime).Seconds())
+	stmt, err := db.Prepare("INSERT INTO hyperfocus_events(alert_level, subject, createAt, duration_seconds) VALUES(?, ?, ?, ?)")
 	if err != nil {
 		log.Printf("Error preparing statement for hyperfocus event: %v", err)
 		return
 	}
 	defer stmt.Close()
-	if _, err := stmt.Exec(time.Now(), level, int(threshold.Seconds()), subject); err != nil {
+	if _, err := stmt.Exec(level, subject, time.Now(), duration); err != nil {
 		log.Printf("Error inserting hyperfocus event: %v", err)
-	} else {
-		log.Printf("Hyperfocus Event Level %d logged for subject: '%s'", level, subject)
 	}
 }
 
 func LogMaydayEvent(db *sql.DB) {
+	log.Println("!!! MAYDAY event logged in the database !!!")
 	stmt, err := db.Prepare("INSERT INTO mayday_events(timestamp) VALUES(?)")
 	if err != nil {
 		log.Printf("Error preparing statement for Mayday event: %v", err)
@@ -108,8 +108,6 @@ func LogMaydayEvent(db *sql.DB) {
 
 	if _, err := stmt.Exec(time.Now()); err != nil {
 		log.Printf("Error inserting Mayday event: %v", err)
-	} else {
-		log.Println("!!! MAYDAY event logged in the database !!!")
 	}
 }
 
@@ -124,7 +122,7 @@ func GetRecentHistorySummary(db *sql.DB) (string, error) {
 		summary.WriteString(fmt.Sprintf("The user's last focused activity was '%s'. ", lastSubject))
 	}
 	var maxLevel sql.NullInt64
-	err = db.QueryRow("SELECT MAX(alert_level) FROM hyperfocus_events WHERE timestamp > ?", time.Now().Add(-1*time.Hour)).Scan(&maxLevel)
+	err = db.QueryRow("SELECT MAX(alert_level) FROM hyperfocus_events WHERE createAt > ?", time.Now().Add(-1*time.Hour)).Scan(&maxLevel)
 	if err != nil && err != sql.ErrNoRows {
 		return "", err
 	}

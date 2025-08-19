@@ -11,12 +11,15 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"focus-helper/pkg/actions"
 	"focus-helper/pkg/activity"
+	"focus-helper/pkg/audio"
 	"focus-helper/pkg/config"
 	"focus-helper/pkg/database"
 	"focus-helper/pkg/language"
@@ -26,6 +29,7 @@ import (
 	"focus-helper/pkg/persona"
 	"focus-helper/pkg/state"
 	"focus-helper/pkg/variables"
+	"focus-helper/pkg/voice"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -146,7 +150,21 @@ func main() {
 		Text: appState.Language.Get("hello_prompt"),
 	}
 	go actionExecutor.Execute(welcomeAction)
-	select {}
+	listener, err := voice.NewListener(&appConfig, appState)
+	if err != nil {
+		log.Fatalf("Failed to initialize voice listener: %v", err)
+	}
+	defer listener.Close()
+	if appConfig.MaydayListenerEnabled {
+		go maydayListenerLoop(listener)
+	} else {
+		log.Println("Mayday listener is disabled in the config.")
+	}
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	<-sig
+	log.Println("Interrupt signal received, stopping all.")
+	clearTempAudioOnExit()
 }
 
 func setupCustomVariables(processor *variables.Processor, state *state.AppState) {
@@ -243,7 +261,7 @@ func schedulerLoop() {
 		askWellbeingQuestion()
 		newDuration := time.Duration(rand.Int63n(int64(appConfig.MaxRandomQuestion.Duration-appConfig.MinRandomQuestion.Duration))) + appConfig.MinRandomQuestion.Duration
 		ticker.Reset(newDuration)
-		log.Printf("Proxima pergunta de bem-estar reagendada em %v.", newDuration.Round(time.Second))
+		log.Printf("Next ask %v.", newDuration.Round(time.Second))
 	}
 }
 
@@ -311,4 +329,24 @@ func clearTempAudioOnExit() {
 	if err != nil {
 		log.Fatalf("Error clearing files in temp_audio: %v", err)
 	}
+}
+func maydayListenerLoop(listener *voice.Listener) {
+	callback := func(text string) {
+		if text != "" {
+			release := audio.RequestAccess()
+			defer release()
+			log.Printf("Transcribed speech: '%s'", text)
+			if strings.Contains(strings.ToLower(text), strings.ToLower(appConfig.MaydayActivationWord)) {
+				// actions.TriggerEmergency(db, appConfig)
+
+				alertPrompt := models.ActionConfig{
+					Type: config.ActionSpeakIA,
+					Text: listener.AppState.Language.Get("alert_prompt"),
+				}
+				go actionExecutor.Execute(alertPrompt)
+				log.Println("MAYDAY DETECTED - Triggering Emergency")
+			}
+		}
+	}
+	listener.ListenContinuously(callback)
 }

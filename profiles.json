@@ -17,9 +17,14 @@
         "reduce_os_sounds": true,
         "wellbeing_questions_enabled": false,
         "ia_detector_enabled": true,
-        "hyperfocus_min_duration": "1h",
+        "hyperfocus_min_duration": "30m",
         "database_file": "./focus_helper.db",
         "log_file": "./focus_helper.log",
+        "mayday_listener_enabled": true,
+        "mayday_activation_word": "mayday",
+        "vad_threshold": 0.02,
+        "vad_silence_timeout": "1500ms",
+       	"whisper_model_path": "./whisper.cpp/models/ggml-base.bin",
         "hyperfocus_associations": {
                "PHPStorm": "Programação",
                 "Visual Studio Code": "Programação",
@@ -55,6 +60,14 @@
                 "multiplier": 1.5,
                 "actions": [
                     {
+                        "type": "SOUND",
+                        "sound_file": "autopilot.mp3"
+                    },
+                         {
+                        "type": "SOUND",
+                        "sound_file": "autopilot.mp3"
+                    },
+                         {
                         "type": "SOUND",
                         "sound_file": "autopilot.mp3"
                     },

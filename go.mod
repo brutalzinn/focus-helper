@@ -5,7 +5,9 @@ go 1.23.2
 require (
 	github.com/faiface/beep v1.1.0
 	github.com/gen2brain/beeep v0.11.1
+	github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20250818173045-fc45bb86251f
 	github.com/go-vgo/robotgo v0.110.8
+	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/sqweek/dialog v0.0.0-20240226140203-065105509627
 )

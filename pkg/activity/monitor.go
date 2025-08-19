@@ -54,7 +54,7 @@ func (activityMonitor *Monitor) MonitorActivityLoop() {
 					alertLevel := activityMonitor.deps.AppConfig.AlertLevels[alertIndex]
 					log.Printf("[WARNING] HYPERFOCUS DETECTED: Level %s (Index %d, Duration: %v)", alertLevel.Level, alertIndex, usageDuration.Round(time.Second))
 					subject := DetectSubject(activityMonitor.deps.AppConfig.HyperfocusAssociations)
-					database.LogHyperfocusEvent(activityMonitor.deps.DB, alertIndex, alertLevel.Threshold.Duration, subject)
+					database.LogHyperfocusEvent(activityMonitor.deps.DB, alertIndex+1, activityMonitor.deps.AppState.ContinuousUsageStartTime, activityMonitor.deps.AppState.LastActivityTime, subject)
 					if activityMonitor.deps.AppState.Hyperfocus == nil || activityMonitor.deps.AppState.Hyperfocus.Level != alertLevel.Level {
 						activityMonitor.deps.AppState.Hyperfocus = &models.HyperfocusState{
 							Level:     alertLevel.Level,
