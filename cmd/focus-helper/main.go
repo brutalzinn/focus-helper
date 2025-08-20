@@ -150,12 +150,13 @@ func main() {
 		Text: appState.Language.Get("hello_prompt"),
 	}
 	go actionExecutor.Execute(welcomeAction)
-	listener, err := voice.NewListener(&appConfig, appState)
-	if err != nil {
-		log.Fatalf("Failed to initialize voice listener: %v", err)
-	}
-	defer listener.Close()
+
 	if appConfig.MaydayListenerEnabled {
+		listener, err := voice.NewListener(&appConfig, appState)
+		if err != nil {
+			log.Fatalf("Failed to initialize voice listener: %v", err)
+		}
+		defer listener.Close()
 		go maydayListenerLoop(listener)
 	} else {
 		log.Println("Mayday listener is disabled in the config.")
@@ -338,7 +339,6 @@ func maydayListenerLoop(listener *voice.Listener) {
 			log.Printf("Transcribed speech: '%s'", text)
 			if strings.Contains(strings.ToLower(text), strings.ToLower(appConfig.MaydayActivationWord)) {
 				// actions.TriggerEmergency(db, appConfig)
-
 				alertPrompt := models.ActionConfig{
 					Type: config.ActionSpeakIA,
 					Text: listener.AppState.Language.Get("alert_prompt"),

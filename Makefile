@@ -4,9 +4,11 @@ CONFIG_DIR := $(HOME)/.config/$(APP_NAME)
 LANGS_DIR := langs
 ASSETS_DIR := assets
 VOICES_DIR := voices
+WHISPER_DIR := whisper.cpp
 
 PROFILES_JSON := profiles.json
 
+DEST_WHISPER_DIR := $(CONFIG_DIR)/whisper.cpp
 DEST_LANGS_DIR := $(CONFIG_DIR)/langs
 DEST_ASSETS_DIR := $(CONFIG_DIR)/assets
 DEST_PROFILES_JSON := $(CONFIG_DIR)/profiles.json
@@ -41,6 +43,7 @@ copy-assets:
 copy-profiles:
 	@echo "Copying profiles.json..."
 	@cp $(PROFILES_JSON) $(DEST_PROFILES_JSON)
+
 
 move-binary:
 	@echo "Moving the binary to /usr/local/bin..."

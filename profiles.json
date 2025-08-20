@@ -20,7 +20,7 @@
         "hyperfocus_min_duration": "30m",
         "database_file": "./focus_helper.db",
         "log_file": "./focus_helper.log",
-        "mayday_listener_enabled": true,
+        "mayday_listener_enabled": false,
         "mayday_activation_word": "mayday",
         "vad_threshold": 0.02,
         "vad_silence_timeout": "1500ms",
