@@ -146,7 +146,7 @@ func main() {
 	}
 	setupCustomVariables(variablesProcessor, appState)
 	welcomeAction := models.ActionConfig{
-		Type: config.ActionSpeak,
+		Type: models.ActionSpeak,
 		Text: appState.Language.Get("hello_prompt"),
 	}
 	go actionExecutor.Execute(welcomeAction)
@@ -270,7 +270,7 @@ func askWellbeingQuestion() {
 	go func() {
 		questionText := "Como você está se sentindo agora, %username%? Gostaria de fazer uma pausa para o bem-estar?"
 		action := models.ActionConfig{
-			Type:   config.ActionSpeak,
+			Type:   models.ActionSpeak,
 			Prompt: questionText,
 		}
 		actionExecutor.Execute(action)
@@ -340,7 +340,7 @@ func maydayListenerLoop(listener *voice.Listener) {
 			if strings.Contains(strings.ToLower(text), strings.ToLower(appConfig.MaydayActivationWord)) {
 				// actions.TriggerEmergency(db, appConfig)
 				alertPrompt := models.ActionConfig{
-					Type: config.ActionSpeakIA,
+					Type: models.ActionSpeakIA,
 					Text: listener.AppState.Language.Get("alert_prompt"),
 				}
 				go actionExecutor.Execute(alertPrompt)

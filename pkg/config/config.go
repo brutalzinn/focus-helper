@@ -11,14 +11,6 @@ import (
 )
 
 const (
-	ActionPopup   models.ActionType = "POPUP"
-	ActionSound   models.ActionType = "SOUND"
-	ActionSpeak   models.ActionType = "SPEAK_VOICE"
-	ActionSpeakIA models.ActionType = "SPEAK_IA"
-	ActionWebHook models.ActionType = "WEBHOOK"
-)
-
-const (
 	SERVER_PORT    = "8088"
 	TEMP_AUDIO_DIR = "temp_audio"
 	ASSETS_DIR     = "assets"
@@ -74,8 +66,8 @@ func DefaultProfile() models.Config {
 				Level:     "low",
 				Threshold: models.Duration{Duration: 45 * time.Minute},
 				Actions: []models.ActionConfig{
-					{Type: ActionSound, SoundFile: "alert_level_1.mp3"},
-					{Type: ActionSpeakIA, Prompt: "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."},
+					{Type: models.ActionSound, SoundFile: "alert_level_1.mp3"},
+					{Type: models.ActionSpeakIA, Prompt: "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."},
 				},
 			},
 			{
@@ -83,8 +75,8 @@ func DefaultProfile() models.Config {
 				Level:     "medium",
 				Threshold: models.Duration{Duration: 90 * time.Minute},
 				Actions: []models.ActionConfig{
-					{Type: ActionSound, SoundFile: "autopilot.mp3"},
-					{Type: ActionSpeakIA, Prompt: "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."},
+					{Type: models.ActionSound, SoundFile: "autopilot.mp3"},
+					{Type: models.ActionSpeakIA, Prompt: "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."},
 				},
 			},
 			{
@@ -92,9 +84,9 @@ func DefaultProfile() models.Config {
 				Level:     "high",
 				Threshold: models.Duration{Duration: 2*time.Hour + 30*time.Minute},
 				Actions: []models.ActionConfig{
-					{Type: ActionSound, SoundFile: "alert_level_3.mp3"},
-					{Type: ActionPopup, PopupTitle: "Alerta de Foco Intenso", PopupMessage: "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."},
-					{Type: ActionSpeakIA, Prompt: "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."},
+					{Type: models.ActionSound, SoundFile: "alert_level_3.mp3"},
+					{Type: models.ActionPopup, PopupTitle: "Alerta de Foco Intenso", PopupMessage: "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."},
+					{Type: models.ActionSpeakIA, Prompt: "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."},
 				},
 			},
 			{
@@ -102,7 +94,7 @@ func DefaultProfile() models.Config {
 				Level:     "CRITICAL",
 				Threshold: models.Duration{Duration: 4 * time.Hour},
 				Actions: []models.ActionConfig{
-					{Type: ActionSpeakIA, Prompt: "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."},
+					{Type: models.ActionSpeakIA, Prompt: "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."},
 				},
 			},
 		},

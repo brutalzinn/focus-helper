@@ -12,12 +12,23 @@ type Duration struct {
 	time.Duration
 }
 
+const (
+	ActionYoutubeAudio ActionType = "YOUTUBE_AUDIO"
+	ActionPopup        ActionType = "POPUP"
+	ActionSound        ActionType = "SOUND"
+	ActionSpeak        ActionType = "SPEAK_VOICE"
+	ActionSpeakIA      ActionType = "SPEAK_IA"
+	ActionWebHook      ActionType = "WEBHOOK"
+)
+
 type ActionConfig struct {
 	Type         ActionType `json:"type"`
 	RandomChance float64    `json:"random_chance,omitempty"`
 	SoundFile    string     `json:"sound_file,omitempty"`
 	Volume       float64    `json:"volume,omitempty"`
 	Text         string     `json:"text,omitempty"`
+	StartAt      string     `json:"start_at,omitempty"`
+	EndAt        string     `json:"end_at,omitempty"`
 
 	///IA
 	Prompt string `json:"llama_prompt,omitempty"`

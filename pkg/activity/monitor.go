@@ -1,7 +1,6 @@
 package activity
 
 import (
-	"focus-helper/pkg/config"
 	"focus-helper/pkg/database"
 	"focus-helper/pkg/llm"
 	"focus-helper/pkg/models"
@@ -121,14 +120,13 @@ func (m Monitor) isIdle() bool {
 func (m Monitor) resetState() {
 	log.Println("User is back. Reset app activityMonitor.deps.AppState.")
 	now := time.Now()
-	m.deps.AppState.ContinuousUsageStartTime = now
 	m.deps.AppState.LastActivityTime = now
 	m.deps.AppState.WarnedIndexes = make(map[int]bool)
 	m.deps.AppState.Hyperfocus = nil
 	m.deps.AppState.SubjectFrequency = make(map[string]int)
 	action := models.ActionConfig{
-		Type:   config.ActionSpeakIA,
-		Prompt: "Informe ao %username% que ele retornou da ociosidade e que seus contadores foram reiniciados.",
+		Type:   models.ActionSpeakIA,
+		Prompt: m.deps.AppState.Language.Get("user_idle_back"),
 	}
 	go m.deps.ActionExecutor.Execute(action)
 }
