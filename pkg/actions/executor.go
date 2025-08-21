@@ -39,17 +39,13 @@ func NewExecutor(deps ExecutorDependencies) *Executor {
 
 // Execute takes an action config and performs the corresponding action.
 func (e *Executor) Execute(action models.ActionConfig) error {
-
 	log.Printf("EXECUTING ACTION: Type=%s", action.Type)
-
 	switch action.Type {
 	case models.ActionSound:
 		return audio.PlaySound(audio.GetAssetPath(action.SoundFile), 1.0)
-
 	case models.ActionPopup:
 		_, err := e.deps.Notifier.Question(action.PopupTitle, action.PopupMessage)
 		return err
-
 	case models.ActionSpeakIA:
 		return e.executeSpeakIAAction(action)
 	case models.ActionSpeak:
@@ -58,7 +54,7 @@ func (e *Executor) Execute(action models.ActionConfig) error {
 		return e.executeYouTubeAudio(action)
 
 	default:
-		return fmt.Errorf("ação desconhecida: %s", action.Type)
+		return fmt.Errorf("wrong action: %s", action.Type)
 	}
 }
 

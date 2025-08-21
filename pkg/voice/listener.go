@@ -92,20 +92,43 @@ func (r *audioRingBuffer) WriteContentsTo(dst []float32) int {
 
 func NewListener(cfg *models.Config, appState *state.AppState) (*Listener, error) {
 	log.Println("Initializing Voice Listener...")
-	if err := portaudio.Initialize(); err != nil {
-		return nil, err
-	}
+
 	in := make([]int16, frameSamples)
 
-	stream, err := portaudio.OpenDefaultStream(1, 0, float64(sampleRate), len(in), in)
+	devices, err := portaudio.Devices()
 	if err != nil {
-		portaudio.Terminate()
 		return nil, err
 	}
+
+	var hyperX *portaudio.DeviceInfo
+	for _, dev := range devices {
+		if dev.Name == "HyperX QuadCast S: USB Audio (hw:2,0)" {
+			hyperX = dev
+			break
+		}
+	}
+
+	if hyperX == nil {
+		log.Println("⚠️ HyperX mic not found, falling back to default input")
+	}
+
+	params := portaudio.StreamParameters{
+		Input: portaudio.StreamDeviceParameters{
+			Device:   hyperX,
+			Channels: 1,
+		},
+		SampleRate:      sampleRate,
+		FramesPerBuffer: len(in),
+	}
+	params.Output.Channels = 0
+	stream, err := portaudio.OpenStream(params, in)
+	if err != nil {
+		return nil, err
+	}
+
 	transcriber, err := NewTranscriber(cfg.WhisperModelPath)
 	if err != nil {
 		stream.Close()
-		portaudio.Terminate()
 		return nil, err
 	}
 	listener := &Listener{
@@ -242,7 +265,6 @@ func (l *Listener) Close() {
 		if l.transcriber != nil {
 			l.transcriber.Close()
 		}
-		portaudio.Terminate()
 		log.Println("Voice Listener closed.")
 	})
 }

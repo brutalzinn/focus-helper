@@ -120,6 +120,7 @@ func (m Monitor) isIdle() bool {
 func (m Monitor) resetState() {
 	log.Println("User is back. Reset app activityMonitor.deps.AppState.")
 	now := time.Now()
+	m.deps.AppState.ContinuousUsageStartTime = now
 	m.deps.AppState.LastActivityTime = now
 	m.deps.AppState.WarnedIndexes = make(map[int]bool)
 	m.deps.AppState.Hyperfocus = nil

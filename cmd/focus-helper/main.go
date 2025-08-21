@@ -30,6 +30,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gordonklaus/portaudio"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -69,6 +70,7 @@ func main() {
 	startServices(appConfig, components)
 
 	waitForShutdownSignal()
+	defer portaudio.Terminate()
 	log.Println("Interrupt signal received, stopping all.")
 }
 
@@ -97,6 +99,7 @@ func initComponents(appConfig *models.Config) (*appComponents, error) {
 	}
 
 	variablesProcessor := variables.NewProcessor()
+
 	currentPersona, err := persona.GetPersona(appConfig.PersonaName, variablesProcessor)
 	if err != nil {
 		return nil, err
@@ -153,24 +156,22 @@ func startServices(appConfig *models.Config, c *appComponents) {
 	}
 
 	if appConfig.ListenerEnabled {
+		portaudio.Initialize()
 		listener, err := voice.NewListener(appConfig, c.appState)
 		if err != nil {
 			log.Fatalf("Failed to initialize voice listener: %v", err)
 		}
-		defer listener.Close()
-
-		registerVoiceCommands(listener, c.actionExecutor)
-
+		registerVoiceCommands(listener, c)
 		go listener.ListenContinuously()
 	} else {
 		log.Println("Voice command listener is disabled in the config.")
 	}
 
-	welcomeAction := models.ActionConfig{
-		Type: models.ActionSpeak,
-		Text: c.appState.Language.Get("hello_prompt"),
-	}
-	go c.actionExecutor.Execute(welcomeAction)
+	// welcomeAction := models.ActionConfig{
+	// 	Type: models.ActionSpeak,
+	// 	Text: c.appState.Language.Get("hello_prompt"),
+	// }
+	// go c.actionExecutor.Execute(welcomeAction)
 }
 
 func waitForShutdownSignal() {
@@ -181,7 +182,10 @@ func waitForShutdownSignal() {
 
 func setupCustomVariables(processor *variables.Processor, appState *state.AppState, appConfig *models.Config) {
 	processor.RegisterHandler("level", func(context ...string) string {
-		return appState.Language.Get(appState.Hyperfocus.Level)
+		if appState.Hyperfocus != nil {
+			return appState.Language.Get(appState.Hyperfocus.Level)
+		}
+		return appState.Language.Get("no_hyperfocus")
 	})
 	processor.RegisterHandler("activity_duration", func(context ...string) string {
 		usageDuration := time.Since(appState.ContinuousUsageStartTime)
@@ -214,16 +218,16 @@ func setupCustomVariables(processor *variables.Processor, appState *state.AppSta
 		return now.Format(appState.Language.Get("time_format"))
 	})
 }
-func registerVoiceCommands(listener *voice.Listener, executor *actions.Executor) {
+func registerVoiceCommands(listener *voice.Listener, appComponent *appComponents) {
 	maydayWord := listener.AppConfig().ActivationWord
 	if maydayWord != "" {
 		listener.RegisterCommand(maydayWord, func(text string) {
 			log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
 			protocolMayday := models.ActionConfig{
 				Type:   models.ActionSpeakIA,
-				Prompt: "You must guide the pilot to a safe landing immediately. He is in an emergency and may lose all engines.",
+				Prompt: appComponent.appState.Language.Get("command_mayday"),
 			}
-			go executor.Execute(protocolMayday)
+			go appComponent.actionExecutor.Execute(protocolMayday)
 		})
 	}
 
@@ -231,17 +235,17 @@ func registerVoiceCommands(listener *voice.Listener, executor *actions.Executor)
 		log.Println("Time request command detected.")
 		timeAction := models.ActionConfig{
 			Type: models.ActionSpeak,
-			Text: "The current time is {time}.",
+			Text: appComponent.appState.Language.Get("command_time"),
 		}
-		go executor.Execute(timeAction)
+		go appComponent.actionExecutor.Execute(timeAction)
 	})
 
 	listener.RegisterCommand("check my focus", func(text string) {
 		log.Println("Focus check command detected.")
 		focusAction := models.ActionConfig{
 			Type: models.ActionSpeak,
-			Text: "Your current focus level is {level}. You have been active for {activity_duration}.",
+			Text: appComponent.appState.Language.Get("command_focus"),
 		}
-		go executor.Execute(focusAction)
+		go appComponent.actionExecutor.Execute(focusAction)
 	})
 }
