@@ -2,6 +2,7 @@
 package voice
 
 import (
+	"fmt"
 	"focus-helper/pkg/audio"
 	"focus-helper/pkg/models"
 	"focus-helper/pkg/state"
@@ -100,21 +101,30 @@ func NewListener(cfg *models.Config, appState *state.AppState) (*Listener, error
 		return nil, err
 	}
 
-	var hyperX *portaudio.DeviceInfo
-	for _, dev := range devices {
-		if dev.Name == "HyperX QuadCast S: USB Audio (hw:2,0)" {
-			hyperX = dev
-			break
+	log.Println("Available input devices:")
+	for i, dev := range devices {
+		if dev.MaxInputChannels > 0 {
+			fmt.Printf("[%d] %s (Input Channels: %d)\n", i, dev.Name, dev.MaxInputChannels)
 		}
 	}
 
-	if hyperX == nil {
-		log.Println("⚠️ HyperX mic not found, falling back to default input")
+	var choice int
+	for {
+		fmt.Print("Select input device by number: ")
+		_, err := fmt.Scanf("%d\n", &choice)
+		if err != nil || choice < 0 || choice >= len(devices) || devices[choice].MaxInputChannels == 0 {
+			fmt.Println("Invalid choice, try again.")
+			continue
+		}
+		break
 	}
+
+	selectedDevice := devices[choice]
+	log.Printf("Selected device: %s\n", selectedDevice.Name)
 
 	params := portaudio.StreamParameters{
 		Input: portaudio.StreamDeviceParameters{
-			Device:   hyperX,
+			Device:   selectedDevice,
 			Channels: 1,
 		},
 		SampleRate:      sampleRate,

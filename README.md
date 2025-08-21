@@ -1,5 +1,7 @@
 # ♾️ Focus Helper: ATC Edition
 
+### DISCLAIMER: This project is a bullshit!
+
 
 A personal focus assistant that simulates an Air Traffic Control (ATC) tower to help you disconnect from the computer and avoid hyperfocus.
 
