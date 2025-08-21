@@ -1,173 +1,248 @@
+// pkg/voice/listener.go
 package voice
 
 import (
+	"focus-helper/pkg/audio"
 	"focus-helper/pkg/models"
 	"focus-helper/pkg/state"
 	"log"
-	"os"
-	"os/signal"
-	"time"
+	"strings"
+	"sync"
 
 	"github.com/gordonklaus/portaudio"
 )
 
+// --- Constants for Audio Processing ---
 const (
-	sampleRate       = 16000
-	frameMs          = 30
-	frameSamples     = sampleRate * frameMs / 1000
-	preRollMs        = 300
-	hangoverMs       = 300
+	sampleRate   = 16000 // Sample rate expected by Whisper.
+	frameMs      = 30    // Duration of each audio frame in milliseconds.
+	frameSamples = sampleRate * frameMs / 1000
+
+	preRollMs        = 300 // Keep 300ms of audio before speech starts.
 	preRollFramesMax = preRollMs / frameMs
-	hangoverFrames   = hangoverMs / frameMs
-	vadThreshold     = 0.01 // You can tune this threshold
-	minSpeechMs      = 120
-	minSpeechFrames  = minSpeechMs / frameMs
+
+	hangoverMs     = 300 // Wait 300ms after speech ends before processing.
+	hangoverFrames = hangoverMs / frameMs
+
+	vadThreshold    = 0.01 // Voice Activity Detection (VAD) threshold. Tune this for your mic.
+	minSpeechMs     = 120  // Minimum duration of speech to be considered active.
+	minSpeechFrames = minSpeechMs / frameMs
+
+	maxSpeechSeconds  = 15                                  // Max duration of a single speech segment.
+	maxSegmentFrames  = (maxSpeechSeconds * 1000) / frameMs // Max frames in the main buffer.
+	maxSegmentSamples = maxSegmentFrames * frameSamples     // Max samples in the main buffer.
+
+	transcriptionWorkers = 1 // Number of parallel transcription workers.
 )
 
-// Ring is a generic circular buffer for pre-roll audio.
-type Ring[T any] struct {
-	buf  []T
-	head int
-	fill int
+type Command struct {
+	Phrase   string
+	Callback func(transcribedText string)
+}
+
+type audioRingBuffer struct {
+	buf     []float32
+	headPos int
+	isFull  bool
 }
 
 type Listener struct {
-	Stream      *portaudio.Stream
-	inBuffer    []int16
-	Transcriber *Transcriber
-	AppState    *state.AppState
-	AppConfig   *models.Config
+	stream      *portaudio.Stream
+	transcriber *Transcriber
+	appState    *state.AppState
+	appConfig   *models.Config
+	commands    map[string]Command
+
+	inBuffer        []int16
+	frameBuffer     []float32
+	mainAudioBuffer []float32
+	preRollBuffer   *audioRingBuffer
+
+	stopCh          chan struct{}
+	wg              sync.WaitGroup
+	transcriptionCh chan []float32
+	closeOnce       sync.Once
 }
 
-func NewRing[T any](cap int) *Ring[T] { return &Ring[T]{buf: make([]T, cap)} }
-
-func (r *Ring[T]) Push(x T) {
-	if len(r.buf) == 0 {
-		return
-	}
-	r.buf[r.head] = x
-	r.head = (r.head + 1) % len(r.buf)
-	if r.fill < len(r.buf) {
-		r.fill++
+func newAudioRingBuffer(numFrames, samplesPerFrame int) *audioRingBuffer {
+	return &audioRingBuffer{
+		buf: make([]float32, numFrames*samplesPerFrame),
 	}
 }
-func (r *Ring[T]) Snapshot() []T {
-	out := make([]T, r.fill)
-	start := (r.head - r.fill + len(r.buf)) % len(r.buf)
-	for i := 0; i < r.fill; i++ {
-		out[i] = r.buf[(start+i)%len(r.buf)]
+
+func (r *audioRingBuffer) PushFrame(frame []float32) {
+	frameSize := len(frame)
+	copy(r.buf[r.headPos:], frame)
+	r.headPos += frameSize
+	if r.headPos >= len(r.buf) {
+		r.headPos = 0
+		r.isFull = true
 	}
-	return out
+}
+
+func (r *audioRingBuffer) WriteContentsTo(dst []float32) int {
+	if !r.isFull {
+		return copy(dst, r.buf[:r.headPos])
+	}
+
+	copied := copy(dst, r.buf[r.headPos:])
+	copied += copy(dst[copied:], r.buf[:r.headPos])
+	return copied
 }
 
 func NewListener(cfg *models.Config, appState *state.AppState) (*Listener, error) {
 	log.Println("Initializing Voice Listener...")
-
 	if err := portaudio.Initialize(); err != nil {
 		return nil, err
 	}
-
 	in := make([]int16, frameSamples)
+
 	stream, err := portaudio.OpenDefaultStream(1, 0, float64(sampleRate), len(in), in)
 	if err != nil {
 		portaudio.Terminate()
 		return nil, err
 	}
-
-	if err := stream.Start(); err != nil {
-		portaudio.Terminate()
-		return nil, err
-	}
-
 	transcriber, err := NewTranscriber(cfg.WhisperModelPath)
 	if err != nil {
+		stream.Close()
 		portaudio.Terminate()
 		return nil, err
 	}
+	listener := &Listener{
+		appState:        appState,
+		appConfig:       cfg,
+		stream:          stream,
+		transcriber:     transcriber,
+		commands:        make(map[string]Command),
+		inBuffer:        in,
+		frameBuffer:     make([]float32, frameSamples),
+		mainAudioBuffer: make([]float32, maxSegmentSamples),
+		preRollBuffer:   newAudioRingBuffer(preRollFramesMax, frameSamples),
+		stopCh:          make(chan struct{}),
+		transcriptionCh: make(chan []float32, transcriptionWorkers),
+	}
 
-	return &Listener{
-		AppState:    appState,
-		AppConfig:   cfg,
-		Stream:      stream,
-		inBuffer:    in,
-		Transcriber: transcriber,
-	}, nil
+	return listener, nil
 }
-func (l *Listener) ListenContinuously(callback func(text string)) {
-	preRoll := NewRing[[]float32](preRollFramesMax)
-	var segment [][]float32
+
+func (l *Listener) AppConfig() *models.Config {
+	return l.appConfig
+}
+
+func (l *Listener) ListenContinuously() {
+	log.Println("Voice command listener started...")
+	l.wg.Add(transcriptionWorkers)
+	for i := 0; i < transcriptionWorkers; i++ {
+		go l.transcriptionWorker()
+	}
+	l.wg.Add(1)
+	go l.audioCaptureLoop()
+	if err := l.stream.Start(); err != nil {
+		log.Printf("Error starting audio stream: %v", err)
+		l.Close()
+	}
+}
+
+func (l *Listener) audioCaptureLoop() {
+	defer l.wg.Done()
+	var segmentPos int
 	var speechActive bool
-	var speechCount, silenceCount int
-
-	f32 := make([]float32, frameSamples)
-
-	log.Println("Listening continuously...")
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-
-	ticker := time.NewTicker(time.Duration(frameMs) * time.Millisecond)
-	defer ticker.Stop()
-
+	var speechFrames, silenceFrames int
 	for {
 		select {
-		case <-sig:
-			log.Println("Interrupt signal received, stopping listener.")
+		case <-l.stopCh:
+			log.Println("Audio capture loop stopped.")
 			return
-		case <-ticker.C:
-			if err := l.Stream.Read(); err != nil {
+		default:
+			if err := l.stream.Read(); err != nil {
 				log.Printf("Error reading from audio stream: %v", err)
 				continue
 			}
-			i16ToF32(l.inBuffer, f32)
-			frameCopy := make([]float32, len(f32))
-			copy(frameCopy, f32)
-			preRoll.Push(frameCopy)
-
-			energy := rmsEnergy(f32)
+			i16ToF32(l.inBuffer, l.frameBuffer)
+			l.preRollBuffer.PushFrame(l.frameBuffer)
+			energy := rmsEnergy(l.frameBuffer)
 			isSpeech := energy > vadThreshold
-
 			if isSpeech {
-				speechCount++
-				if !speechActive && speechCount >= minSpeechFrames {
+				speechFrames++
+				silenceFrames = 0
+				if !speechActive && speechFrames >= minSpeechFrames {
 					speechActive = true
-					silenceCount = 0
-					segment = append([][]float32(nil), preRoll.Snapshot()...)
-					segment = append(segment, frameCopy)
-				} else if speechActive {
-					segment = append(segment, frameCopy)
-					silenceCount = 0
-				}
-			} else if speechActive {
-				silenceCount++
-				if silenceCount >= hangoverFrames {
-					audio := flatten(segment)
-					go func(audioData []float32) {
-						text, err := l.Transcriber.Transcribe(audioData)
-						if err == nil && text != "" {
-							callback(text)
-						}
-					}(audio)
-					speechActive = false
-					silenceCount = 0
-					speechCount = 0
-					segment = nil
+					segmentPos = l.preRollBuffer.WriteContentsTo(l.mainAudioBuffer)
 				}
 			} else {
-				speechCount = 0
+				speechFrames = 0
+				if speechActive {
+					silenceFrames++
+				}
+			}
+			if speechActive {
+				if segmentPos+frameSamples <= len(l.mainAudioBuffer) {
+					copy(l.mainAudioBuffer[segmentPos:], l.frameBuffer)
+					segmentPos += frameSamples
+				}
+				if silenceFrames >= hangoverFrames || segmentPos+frameSamples > len(l.mainAudioBuffer) {
+					segmentCopy := make([]float32, segmentPos)
+					copy(segmentCopy, l.mainAudioBuffer[:segmentPos])
+					l.transcriptionCh <- segmentCopy
+					speechActive = false
+					speechFrames = 0
+					silenceFrames = 0
+					segmentPos = 0
+				}
 			}
 		}
 	}
 }
 
+func (l *Listener) transcriptionWorker() {
+	defer l.wg.Done()
+	for {
+		select {
+		case <-l.stopCh:
+			log.Println("Transcription worker stopped.")
+			return
+		case audioData := <-l.transcriptionCh:
+			text, err := l.transcriber.Transcribe(audioData)
+			if err != nil {
+				log.Printf("Transcription error: %v", err)
+				continue
+			}
+			if text == "" {
+				continue
+			}
+
+			l.processCommands(text)
+		}
+	}
+}
+
+func (l *Listener) processCommands(text string) {
+	release := audio.RequestAccess()
+	defer release()
+	log.Printf("Transcribed speech: '%s'", text)
+	lowerText := strings.ToLower(text)
+	for phrase, command := range l.commands {
+		if strings.Contains(lowerText, phrase) {
+			log.Printf("Voice command matched for phrase: '%s'", command.Phrase)
+			go command.Callback(text)
+			return
+		}
+	}
+}
+
 func (l *Listener) Close() {
-	log.Println("Closing Voice Listener...")
-	if l.Transcriber != nil {
-		l.Transcriber.Close()
-	}
-	if l.Stream != nil {
-		l.Stream.Stop()
-		l.Stream.Close()
-	}
-	portaudio.Terminate()
+	l.closeOnce.Do(func() {
+		log.Println("Closing Voice Listener...")
+		close(l.stopCh)
+		if l.stream != nil {
+			l.stream.Stop()
+			l.stream.Close()
+		}
+		l.wg.Wait()
+		if l.transcriber != nil {
+			l.transcriber.Close()
+		}
+		portaudio.Terminate()
+		log.Println("Voice Listener closed.")
+	})
 }

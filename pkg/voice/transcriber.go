@@ -1,14 +1,11 @@
 package voice
 
 import (
-	"sync"
-
 	"github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
 )
 
 type Transcriber struct {
 	model whisper.Model
-	mu    sync.Mutex 
 }
 
 func NewTranscriber(modelPath string) (*Transcriber, error) {
@@ -20,8 +17,7 @@ func NewTranscriber(modelPath string) (*Transcriber, error) {
 }
 
 func (t *Transcriber) Transcribe(audio []float32) (string, error) {
-	t.mu.Lock() 
-	defer t.mu.Unlock()
+
 	ctxt, err := t.model.NewContext()
 	if err != nil {
 		return "", err

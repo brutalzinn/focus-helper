@@ -113,3 +113,33 @@ func GetUserConfigPath() string {
 	}
 	return userConfigPath
 }
+
+func LoadConfig(profileName string, debug bool) (*models.Config, error) {
+	profilePath := filepath.Join(GetUserConfigPath(), "profiles.json")
+	profiles, err := LoadProfiles(profilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error loading profiles: %w", err)
+	}
+
+	cfg, err := GetProfileByName(profiles, profileName)
+	if err != nil {
+		return nil, fmt.Errorf("profile '%s' not found: %w", profileName, err)
+	}
+
+	if debug {
+		cfg.DEBUG = true
+		log.Println("DEBUG mode enabled: Overriding time settings for faster testing.")
+		cfg.MinRandomQuestion = models.Duration{Duration: 5 * time.Second}
+		log.Printf("DEBUG: MinRandomQuestion set to %s", cfg.MinRandomQuestion.Duration)
+		cfg.MaxRandomQuestion = models.Duration{Duration: 10 * time.Second}
+		log.Printf("DEBUG: MaxRandomQuestion set to %s", cfg.MaxRandomQuestion.Duration)
+		for i := range cfg.AlertLevels {
+			newThreshold := time.Duration((i+1)*10) * time.Second
+			cfg.AlertLevels[i].Threshold = models.Duration{Duration: newThreshold}
+			log.Printf("DEBUG: Alert level '%s' threshold set to %s", cfg.AlertLevels[i].Level, cfg.AlertLevels[i].Threshold.Duration)
+		}
+		cfg.DatabaseFile = filepath.Join("focus_helper_debug.db")
+	}
+
+	return cfg, nil
+}

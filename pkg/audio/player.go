@@ -25,11 +25,12 @@ func IsReady() bool {
 
 func PlaySound(filePath string, volume float64) error {
 
+	if !IsReady() {
+		return nil
+	}
 	release := RequestAccess()
 	defer release()
-	// if !IsReady() {
-	// 	return nil
-	// }
+
 	if volume <= 0 {
 		volume = 1.0
 	}

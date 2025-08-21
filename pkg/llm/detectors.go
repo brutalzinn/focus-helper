@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+var hyperfocusAlertMessages = map[int]string{
+	0: "Alpha-Um, aqui é a torre. Notamos um padrão de foco sustentado. Por favor, confirme o status. Utilize 'Roger' para confirmar.",
+	1: "Alpha-Um, torre chamando. Detectamos sinais de tunelamento cognitivo. Aconselhamos uma pequena pausa. Por favor, confirme o recebimento. Use 'Roger' para confirmar.",
+	2: "Alpha-Um, mensagem prioritária da torre. Níveis de hiperfoco estão críticos. Desengajamento imediato é necessário. Confirme agora com 'Roger'.",
+}
+
 func AnalyzeHyperfocus(
 	adapter LLMAdapter,
 	promptTemplate string,

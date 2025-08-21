@@ -86,8 +86,8 @@ type Config struct {
 	LogFile                   string            `json:"log_file"`
 	Misc                      MiscConfig        `json:"misc"`
 	AlertLevels               []AlertLevel      `json:"alert_levels"`
-	MaydayListenerEnabled     bool              `json:"mayday_listener_enabled"`
-	MaydayActivationWord      string            `json:"mayday_activation_word"`
+	ListenerEnabled           bool              `json:"listener_enabled"`
+	ActivationWord            string            `json:"activation_word"`
 	VADThreshold              float64           `json:"vad_threshold"`
 	VADSilenceTimeout         Duration          `json:"vad_silence_timeout"`
 	WhisperModelPath          string            `json:"whisper_model_path"`

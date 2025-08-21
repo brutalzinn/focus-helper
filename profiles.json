@@ -18,21 +18,23 @@
         "wellbeing_questions_enabled": false,
         "ia_detector_enabled": true,
         "hyperfocus_min_duration": "30m",
-        "database_file": "./focus_helper.db",
-        "log_file": "./focus_helper.log",
-        "mayday_listener_enabled": false,
-        "mayday_activation_word": "mayday",
+        "database_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.db",
+        "log_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.log",
+        "listener_enabled": true,
+        "activation_word": "mayday",
         "vad_threshold": 0.02,
         "vad_silence_timeout": "1500ms",
-       	"whisper_model_path": "./whisper.cpp/models/ggml-base.bin",
+       	"whisper_model_path": "/home/robertocpaes/Projects/focus-helper/whisper.cpp/models/ggml-base.bin",
         "hyperfocus_associations": {
-               "PHPStorm": "Programação",
+                "PHPStorm": "Programação",
                 "Visual Studio Code": "Programação",
                 "GoLand": "Programação",
                 "IntelliJ IDEA": "Programação",
                 "Figma": "Design",
                 "Photoshop": "Design",
                 "Terminal": "Sistema/DevOps",
+                "Docker": "Sistema/DevOps",
+                "Notepad":"Anotação",
                 "iTerm": "Sistema/DevOps",
                 "Google Chrome": "Navegação/Pesquisa",
                 "Firefox": "Navegação/Pesquisa"
@@ -45,13 +47,9 @@
                 "actions": [
                     {
                         "type": "YOUTUBE_AUDIO",
-                        "url": "https://www.youtube.com/watch?v=5Sfxj33OWEw",
-                        "start_at": "00:00",
-                        "end_at": "00:30"
-                    },
-                    {
-                        "type": "SOUND",
-                        "sound_file": "alert_level_1.mp3"
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:00", 
+                        "end_at": "0:03" 
                     },
                     {
                         "type": "SPEAK_IA",
@@ -66,16 +64,16 @@
                 "multiplier": 1.5,
                 "actions": [
                     {
-                        "type": "SOUND",
-                        "sound_file": "autopilot.mp3"
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=dbAFUdqCIuU",
+                        "start_at": "0:03", 
+                        "end_at": "0:04" 
                     },
-                         {
-                        "type": "SOUND",
-                        "sound_file": "autopilot.mp3"
-                    },
-                         {
-                        "type": "SOUND",
-                        "sound_file": "autopilot.mp3"
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=dbAFUdqCIuU",
+                        "start_at": "0:03", 
+                        "end_at": "0:04" 
                     },
                     {
                         "type": "SPEAK_IA",
