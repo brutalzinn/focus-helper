@@ -40,11 +40,6 @@ func getSystemVolumeMac() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-func playFile(filename string, volume float64) error {
-	playCmd := exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
-	return commands.RunCommand(playCmd)
-}
-
 func getAudioDuration(filePath string) (time.Duration, error) {
 	cmd := exec.Command("ffprobe",
 		"-i", filePath,
@@ -64,53 +59,54 @@ func getAudioDuration(filePath string) (time.Duration, error) {
 	}
 	return time.Duration(durationFloat * float64(time.Second)), nil
 }
-
-func playSoundAmplified(filename string, volume float64) error {
+func playFile(filename string, volume float64, stopChan chan any) error {
+	var cmd *exec.Cmd
 	var lowerVolumeCmd, restoreVolumeCmd *exec.Cmd
 	var originalVolume string
-	var err error
-
 	switch runtime.GOOS {
-	case "darwin":
-		originalVolume, err = getSystemVolumeMac()
-		if err != nil {
-			log.Println("Could not get current volume, defaulting to 100%")
-			originalVolume = "100"
-		}
-		lowerVolumeCmd = exec.Command("osascript", "-e", "set volume output volume 20")
-		restoreVolumeCmd = exec.Command("osascript", "-e", "set volume output volume "+originalVolume)
-
-	case "windows":
-		originalVolume = "80%"
-		lowerVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "13107")
-		restoreVolumeCmd = exec.Command("nircmd.exe", "setsysvolume", "52428")
-
 	case "linux":
 		sink, err := commands.GetDefaultSinkName()
 		if err != nil {
-			log.Println("Could not get default sink, skipping volume ducking.")
-			return playFile(filename, volume)
+			log.Println("Could not get default sink, playing normally")
+			cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
+			break
 		}
 		originalVolume, err = getSystemVolumeLinux()
 		if err != nil {
-			log.Println("Could not get current volume, defaulting to 100%")
 			originalVolume = "100%"
 		}
 		lowerVolumeCmd = exec.Command("pactl", "set-sink-volume", sink, "20%")
 		restoreVolumeCmd = exec.Command("pactl", "set-sink-volume", sink, originalVolume)
+		_ = commands.RunCommand(lowerVolumeCmd)
+		defer func() {
+			log.Printf("Restoring system volume to: %s", originalVolume)
+			_ = commands.RunCommand(restoreVolumeCmd)
+		}()
+		cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
 
+	case "darwin":
+		cmd = exec.Command("afplay", filename)
+	case "windows":
+		cmd = exec.Command("powershell", "-c", fmt.Sprintf(`(New-Object Media.SoundPlayer "%s").PlaySync()`, filename))
 	default:
-		return fmt.Errorf("unsupported OS for this method: %s", runtime.GOOS)
+		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
-	if err := commands.RunCommand(lowerVolumeCmd); err != nil {
-		log.Println("Could not lower system volume, playing normally.")
-		return playFile(filename, volume)
+
+	if err := cmd.Start(); err != nil {
+		return err
 	}
-	defer func() {
-		log.Printf("Restoring system volume to: %s", originalVolume)
-		commands.RunCommand(restoreVolumeCmd)
-	}()
-	return playFile(filename, 1.0)
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+	select {
+	case <-stopChan:
+		log.Println("Playback stopped by StopCurrentSound")
+		if cmd.Process != nil {
+			_ = cmd.Process.Kill()
+		}
+		return nil
+	case err := <-done:
+		return err
+	}
 }
 
 func GetAssetPath(filename string) string {

@@ -16,6 +16,7 @@ const (
 	ActionYoutubeAudio ActionType = "YOUTUBE_AUDIO"
 	ActionPopup        ActionType = "POPUP"
 	ActionSound        ActionType = "SOUND"
+	ActionStop         ActionType = "STOP"
 	ActionSpeak        ActionType = "SPEAK_VOICE"
 	ActionSpeakIA      ActionType = "SPEAK_IA"
 	ActionWebHook      ActionType = "WEBHOOK"
@@ -88,6 +89,7 @@ type Config struct {
 	AlertLevels               []AlertLevel      `json:"alert_levels"`
 	ListenerEnabled           bool              `json:"listener_enabled"`
 	ActivationWord            string            `json:"activation_word"`
+	StopWord                  string            `json:"stop_word"`
 	VADThreshold              float64           `json:"vad_threshold"`
 	VADSilenceTimeout         Duration          `json:"vad_silence_timeout"`
 	WhisperModelPath          string            `json:"whisper_model_path"`

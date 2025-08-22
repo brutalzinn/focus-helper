@@ -3,12 +3,12 @@ package voice
 
 import (
 	"fmt"
-	"focus-helper/pkg/audio"
 	"focus-helper/pkg/models"
 	"focus-helper/pkg/state"
 	"log"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gordonklaus/portaudio"
 )
@@ -36,8 +36,10 @@ const (
 	transcriptionWorkers = 1 // Number of parallel transcription workers.
 )
 
+var wakeTimeout = 15 * time.Second
+
 type Command struct {
-	Phrase   string
+	Phrases  []string
 	Callback func(transcribedText string)
 }
 
@@ -48,22 +50,30 @@ type audioRingBuffer struct {
 }
 
 type Listener struct {
-	stream      *portaudio.Stream
-	transcriber *Transcriber
-	appState    *state.AppState
-	appConfig   *models.Config
-	commands    map[string]Command
-
+	stream          *portaudio.Stream
+	transcriber     *Transcriber
+	appState        *state.AppState
+	appConfig       *models.Config
+	commands        []Command
 	inBuffer        []int16
 	frameBuffer     []float32
 	mainAudioBuffer []float32
 	preRollBuffer   *audioRingBuffer
-
 	stopCh          chan struct{}
 	wg              sync.WaitGroup
 	transcriptionCh chan []float32
 	closeOnce       sync.Once
+	state           string
+	stateMu         sync.Mutex
 }
+type ListenerDependencies struct {
+	AppConfig *models.Config
+	AppState  *state.AppState
+}
+
+// DISCLAIMER: SOMETHING CAN THORW SEGMENTION FAULT. wtf many GOROUTINES FOR EVERYTHING.
+///NO ONE UNIT TEST. ARE YOU JOKING ME???? @brutalzinn
+// SOMEPOINTERS IS WRONG BUT WE ARE APPLYING GO HORSE NOW
 
 func newAudioRingBuffer(numFrames, samplesPerFrame int) *audioRingBuffer {
 	return &audioRingBuffer{
@@ -143,10 +153,11 @@ func NewListener(cfg *models.Config, appState *state.AppState) (*Listener, error
 	}
 	listener := &Listener{
 		appState:        appState,
+		state:           "idle",
 		appConfig:       cfg,
 		stream:          stream,
 		transcriber:     transcriber,
-		commands:        make(map[string]Command),
+		commands:        make([]Command, 0),
 		inBuffer:        in,
 		frameBuffer:     make([]float32, frameSamples),
 		mainAudioBuffer: make([]float32, maxSegmentSamples),
@@ -248,19 +259,71 @@ func (l *Listener) transcriptionWorker() {
 		}
 	}
 }
-
 func (l *Listener) processCommands(text string) {
-	release := audio.RequestAccess()
-	defer release()
 	log.Printf("Transcribed speech: '%s'", text)
-	lowerText := strings.ToLower(text)
-	for phrase, command := range l.commands {
-		if strings.Contains(lowerText, phrase) {
-			log.Printf("Voice command matched for phrase: '%s'", command.Phrase)
-			go command.Callback(text)
+	normText := normalizeText(text)
+	log.Printf("Normalized speech: '%s'", normText)
+	for _, command := range l.commands {
+		for _, phrase := range command.Phrases {
+			if !strings.Contains(normText, phrase) {
+				continue
+			}
+			if phrase == normalizeText(l.appConfig.ActivationWord) {
+				stopWordNormalized := normalizeText(l.appConfig.StopWord)
+				if strings.Contains(normText, stopWordNormalized) {
+					for _, cmd := range l.commands {
+						for _, phrase := range cmd.Phrases {
+							if normalizeText(phrase) == stopWordNormalized {
+								go cmd.Callback(text)
+								break
+							}
+						}
+					}
+					l.SetState("idle")
+					return
+				}
+				if l.GetState() == "idle" {
+					log.Printf("Wake word '%s' detected — entering listening mode.", phrase)
+					l.SetState("listening")
+					go func() {
+						command.Callback(text)
+						log.Printf("Activation callback completed, starting wake timeout: %s", wakeTimeout)
+						time.Sleep(wakeTimeout)
+						if l.GetState() == "listening" {
+							log.Println("Wake timeout expired — returning to idle.")
+							l.SetState("idle")
+						}
+					}()
+				}
+				return
+			}
+
+			if l.GetState() == "action_running" {
+				log.Printf("Action in progress, ignoring command: '%s'", phrase)
+				return
+			}
+			log.Printf("Voice command matched for phrase: '%s'", phrase)
+			l.SetState("action_running")
+			go func() {
+				defer l.SetState("listening")
+				command.Callback(text)
+			}()
 			return
 		}
 	}
+}
+
+func (l *Listener) SetState(s string) {
+	l.stateMu.Lock()
+	defer l.stateMu.Unlock()
+	log.Printf("Listener state changed: %s → %s", l.state, s)
+	l.state = s
+}
+
+func (l *Listener) GetState() string {
+	l.stateMu.Lock()
+	defer l.stateMu.Unlock()
+	return l.state
 }
 
 func (l *Listener) Close() {

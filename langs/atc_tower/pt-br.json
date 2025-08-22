@@ -4,6 +4,8 @@
   "confirm_word": "Ciente",
   "user_idle_back": "Piloto Alfa-Um você está entrando na zona de trafégo e será vetorado até o pouso seguro.",
   "alert_prompt": "Torre de controle para Piloto-Alfa-Um, aqui é a torre. %s. Confirme o recebimento.",
+  "command_ready": "Aqui é a torre. Estou te ouvindo",
+  "command_stop": "Roger!",
   "command_mayday": "You must guide the pilot to a safe landing immediately. He is in an emergency and may lose all engines.",
   "command_time": "São %time%",
   "command_focus": "Seu nível de foco atual é %level%. Você está ativo há %activity_duration%."

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"focus-helper/pkg/actions"
 	"focus-helper/pkg/activity"
+	"focus-helper/pkg/audio"
 	"focus-helper/pkg/config"
 	"focus-helper/pkg/database"
 	"focus-helper/pkg/language"
@@ -70,7 +71,7 @@ func main() {
 	startServices(appConfig, components)
 
 	waitForShutdownSignal()
-	defer portaudio.Terminate()
+	// portaudio.Terminate()
 	log.Println("Interrupt signal received, stopping all.")
 }
 
@@ -109,20 +110,22 @@ func initComponents(appConfig *models.Config) (*appComponents, error) {
 
 	lm, err := language.NewManager(langsPath, appConfig.PersonaName, appConfig.Language)
 	if err != nil {
+		log.Print("faild to load language manager")
 		return nil, err
 	}
 
-	appState := state.NewAppState()
-	appState.Persona = currentPersona
-	appState.Language = lm
-	appState.LLMAdapter = &llmAdapter
-
+	appStateDependencies := state.AppStateDependencies{
+		Persona:       currentPersona,
+		Language:      lm,
+		LLMAdapter:    &llmAdapter,
+		TextProcessor: variablesProcessor,
+	}
+	appState := state.NewAppState(appStateDependencies)
+	go appState.EventLoop()
 	executorDeps := actions.ExecutorDependencies{
 		AppConfig:    appConfig,
 		AppState:     appState,
 		VarProcessor: variablesProcessor,
-		Notifier:     notifier,
-		LLMAdapter:   llmAdapter,
 	}
 	actionExecutor := actions.NewExecutor(executorDeps)
 
@@ -167,11 +170,11 @@ func startServices(appConfig *models.Config, c *appComponents) {
 		log.Println("Voice command listener is disabled in the config.")
 	}
 
-	// welcomeAction := models.ActionConfig{
-	// 	Type: models.ActionSpeak,
-	// 	Text: c.appState.Language.Get("hello_prompt"),
-	// }
-	// go c.actionExecutor.Execute(welcomeAction)
+	welcomeAction := models.ActionConfig{
+		Type: models.ActionSpeak,
+		Text: c.appState.Language.Get("hello_prompt"),
+	}
+	go c.actionExecutor.Execute(welcomeAction)
 }
 
 func waitForShutdownSignal() {
@@ -219,33 +222,55 @@ func setupCustomVariables(processor *variables.Processor, appState *state.AppSta
 	})
 }
 func registerVoiceCommands(listener *voice.Listener, appComponent *appComponents) {
-	maydayWord := listener.AppConfig().ActivationWord
-	if maydayWord != "" {
-		listener.RegisterCommand(maydayWord, func(text string) {
-			log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
-			protocolMayday := models.ActionConfig{
-				Type:   models.ActionSpeakIA,
-				Prompt: appComponent.appState.Language.Get("command_mayday"),
-			}
-			go appComponent.actionExecutor.Execute(protocolMayday)
-		})
-	}
 
-	listener.RegisterCommand("what time is it", func(text string) {
+	wakeWord := listener.AppConfig().ActivationWord
+	if wakeWord != "" {
+		listener.RegisterCommand(func(text string) {
+			wakeAction := models.ActionConfig{
+				Type: models.ActionSpeak,
+				Text: appComponent.appState.Language.Get("command_ready"),
+			}
+			appComponent.actionExecutor.Execute(wakeAction)
+		}, wakeWord, "torre", "comand", "comanda")
+	}
+	stopWord := listener.AppConfig().StopWord
+	listener.RegisterCommand(func(text string) {
+		confirmStop := models.ActionConfig{
+			Type: models.ActionSpeak,
+			Text: appComponent.appState.Language.Get("command_stop"),
+		}
+		appComponent.actionExecutor.Execute(confirmStop)
+		audio.StopCurrentSound()
+		stopAction := models.ActionConfig{
+			Type: models.ActionStop,
+		}
+		appComponent.actionExecutor.Execute(stopAction)
+	}, stopWord, "parar", "cancel", "stop", "para", "para!")
+
+	listener.RegisterCommand(func(text string) {
+		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
+		protocolMayday := models.ActionConfig{
+			Type:   models.ActionSpeakIA,
+			Prompt: appComponent.appState.Language.Get("command_mayday"),
+		}
+		appComponent.actionExecutor.Execute(protocolMayday)
+	}, "mayday", "emergencia")
+
+	listener.RegisterCommand(func(text string) {
 		log.Println("Time request command detected.")
 		timeAction := models.ActionConfig{
 			Type: models.ActionSpeak,
 			Text: appComponent.appState.Language.Get("command_time"),
 		}
-		go appComponent.actionExecutor.Execute(timeAction)
-	})
+		appComponent.actionExecutor.Execute(timeAction)
+	}, "tempo", "time", "que horas são")
 
-	listener.RegisterCommand("check my focus", func(text string) {
+	listener.RegisterCommand(func(text string) {
 		log.Println("Focus check command detected.")
 		focusAction := models.ActionConfig{
 			Type: models.ActionSpeak,
 			Text: appComponent.appState.Language.Get("command_focus"),
 		}
-		go appComponent.actionExecutor.Execute(focusAction)
-	})
+		appComponent.actionExecutor.Execute(focusAction)
+	}, "check", "checagem", "checar")
 }

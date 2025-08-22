@@ -23,7 +23,7 @@ func (t *Transcriber) Transcribe(audio []float32) (string, error) {
 		return "", err
 	}
 	ctxt.SetLanguage("pt")
-	ctxt.SetTranslate(true)
+	// ctxt.SetTranslate(true)
 
 	if err := ctxt.Process(audio, nil, nil, nil); err != nil {
 		return "", err
