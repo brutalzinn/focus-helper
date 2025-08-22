@@ -164,6 +164,7 @@ func startServices(appConfig *models.Config, c *appComponents) {
 		if err != nil {
 			log.Fatalf("Failed to initialize voice listener: %v", err)
 		}
+		c.appState.IsListening
 		registerVoiceCommands(listener, c)
 		go listener.ListenContinuously()
 	} else {

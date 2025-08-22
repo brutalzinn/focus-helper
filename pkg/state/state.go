@@ -9,6 +9,7 @@ import (
 	"focus-helper/pkg/notifications"
 	"focus-helper/pkg/persona"
 	"focus-helper/pkg/variables"
+	"focus-helper/pkg/voice"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type AppState struct {
 	TextProcessor            *variables.Processor
 	DB                       *sql.DB
 	Persona                  persona.Persona
+	Listener                 *voice.Listener
 	IsListening              bool
 	IsActionRunning          bool
 	WarnedIndexes            map[int]bool

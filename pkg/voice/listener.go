@@ -4,7 +4,6 @@ package voice
 import (
 	"fmt"
 	"focus-helper/pkg/models"
-	"focus-helper/pkg/state"
 	"log"
 	"strings"
 	"sync"
@@ -52,7 +51,6 @@ type audioRingBuffer struct {
 type Listener struct {
 	stream          *portaudio.Stream
 	transcriber     *Transcriber
-	appState        *state.AppState
 	appConfig       *models.Config
 	commands        []Command
 	inBuffer        []int16
@@ -68,7 +66,6 @@ type Listener struct {
 }
 type ListenerDependencies struct {
 	AppConfig *models.Config
-	AppState  *state.AppState
 }
 
 // DISCLAIMER: SOMETHING CAN THORW SEGMENTION FAULT. wtf many GOROUTINES FOR EVERYTHING.
@@ -101,7 +98,7 @@ func (r *audioRingBuffer) WriteContentsTo(dst []float32) int {
 	return copied
 }
 
-func NewListener(cfg *models.Config, appState *state.AppState) (*Listener, error) {
+func NewListener(cfg *models.Config) (*Listener, error) {
 	log.Println("Initializing Voice Listener...")
 
 	in := make([]int16, frameSamples)
@@ -152,7 +149,6 @@ func NewListener(cfg *models.Config, appState *state.AppState) (*Listener, error
 		return nil, err
 	}
 	listener := &Listener{
-		appState:        appState,
 		state:           "idle",
 		appConfig:       cfg,
 		stream:          stream,
