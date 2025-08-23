@@ -1,39 +1,51 @@
 package sheduler
 
 import (
-	"database/sql"
+	"context"
 	"focus-helper/pkg/actions"
 	"focus-helper/pkg/database"
 	"focus-helper/pkg/models"
-	"focus-helper/pkg/notifications"
+	"focus-helper/pkg/state"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 )
 
-func SchedulerLoop(appConfig *models.Config, db *sql.DB, actionExecutor *actions.Executor, notifier notifications.Notifier) {
-	randomDuration := time.Duration(rand.Int63n(int64(appConfig.MaxRandomQuestion.Duration-appConfig.MinRandomQuestion.Duration))) + appConfig.MinRandomQuestion.Duration
+func SchedulerLoop(ctx context.Context, wg *sync.WaitGroup, appState *state.AppState) {
+	defer wg.Done()
+	log.Println("Wellbeing scheduler started.")
+	randomDuration := time.Duration(rand.Int63n(int64(appState.AppConfig.MaxRandomQuestion.Duration-appState.AppConfig.MinRandomQuestion.Duration))) + appState.AppConfig.MinRandomQuestion.Duration
 	ticker := time.NewTicker(randomDuration)
 	defer ticker.Stop()
-
-	for range ticker.C {
-		askWellbeingQuestion(db, actionExecutor, notifier)
-		newDuration := time.Duration(rand.Int63n(int64(appConfig.MaxRandomQuestion.Duration-appConfig.MinRandomQuestion.Duration))) + appConfig.MinRandomQuestion.Duration
-		ticker.Reset(newDuration)
-		log.Printf("Next wellbeing question in %v.", newDuration.Round(time.Second))
+	log.Printf("Next wellbeing question in %v.", randomDuration.Round(time.Second))
+	for {
+		select {
+		case <-ticker.C:
+			askWellbeingQuestion(appState)
+			newDuration := time.Duration(rand.Int63n(int64(appState.AppConfig.MaxRandomQuestion.Duration-appState.AppConfig.MinRandomQuestion.Duration))) + appState.AppConfig.MinRandomQuestion.Duration
+			ticker.Reset(newDuration)
+			log.Printf("Next wellbeing question in %v.", newDuration.Round(time.Second))
+		case <-ctx.Done():
+			log.Println("Stopping wellbeing scheduler due to shutdown signal...")
+			return
+		}
 	}
 }
 
-func askWellbeingQuestion(db *sql.DB, actionExecutor *actions.Executor, notifier notifications.Notifier) {
+func askWellbeingQuestion(appState *state.AppState) {
+	log.Println("Asking a wellbeing question...")
 	go func() {
 		questionText := "How are you feeling right now, %username%? Would you like to take a wellbeing break?"
 		action := models.ActionConfig{
 			Type:   models.ActionSpeak,
 			Prompt: questionText,
 		}
-		actionExecutor.Execute(action)
-
-		answeredYes, err := notifier.Question("Wellbeing Break", "How are you feeling?")
+		err := actions.Execute(action)
+		if err != nil {
+			log.Printf("Cant execute this action %v", models.ActionSpeak)
+		}
+		answeredYes, err := appState.Notifier.Question("Wellbeing Break", "How are you feeling?")
 		if err != nil {
 			log.Printf("Error displaying question popup: %v", err)
 			return
@@ -42,6 +54,6 @@ func askWellbeingQuestion(db *sql.DB, actionExecutor *actions.Executor, notifier
 		if answeredYes {
 			answer = "Yes"
 		}
-		database.LogWellbeingCheck(db, questionText, answer)
+		database.LogWellbeingCheck(appState.DB, questionText, answer)
 	}()
 }

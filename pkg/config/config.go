@@ -11,10 +11,13 @@ import (
 )
 
 const (
-	SERVER_PORT    = "8088"
-	TEMP_AUDIO_DIR = "temp_audio"
-	ASSETS_DIR     = "assets"
+	SERVER_PORT        = "8088"
+	TEMP_AUDIO_DIR     = "temp_audio"
+	ASSETS_DIR         = "assets"
+	PROFILES_FILE_NAME = "profiles.json"
 )
+
+var currentConfig *models.Config
 
 func LoadProfiles(filename string) ([]models.Config, error) {
 	file, err := os.Open(filename)
@@ -115,7 +118,15 @@ func GetUserConfigPath() string {
 }
 
 func LoadConfig(profileName string, debug bool) (*models.Config, error) {
-	profilePath := filepath.Join(GetUserConfigPath(), "profiles.json")
+	profilePath := filepath.Join(GetUserConfigPath(), PROFILES_FILE_NAME)
+
+	if debug {
+		projectFolder, err := os.Getwd()
+		if err != nil {
+			log.Print("Error on load project folder when debug mode is enabled")
+		}
+		profilePath = filepath.Join(projectFolder, PROFILES_FILE_NAME)
+	}
 	profiles, err := LoadProfiles(profilePath)
 	if err != nil {
 		return nil, fmt.Errorf("error loading profiles: %w", err)
@@ -133,13 +144,17 @@ func LoadConfig(profileName string, debug bool) (*models.Config, error) {
 		log.Printf("DEBUG: MinRandomQuestion set to %s", cfg.MinRandomQuestion.Duration)
 		cfg.MaxRandomQuestion = models.Duration{Duration: 10 * time.Second}
 		log.Printf("DEBUG: MaxRandomQuestion set to %s", cfg.MaxRandomQuestion.Duration)
+		cfg.DatabaseFile = filepath.Join("focus_helper_debug.db")
 		for i := range cfg.AlertLevels {
-			newThreshold := time.Duration((i+1)*10) * time.Second
+			newThreshold := time.Duration((i+1)*15) * time.Second
 			cfg.AlertLevels[i].Threshold = models.Duration{Duration: newThreshold}
 			log.Printf("DEBUG: Alert level '%s' threshold set to %s", cfg.AlertLevels[i].Level, cfg.AlertLevels[i].Threshold.Duration)
 		}
-		cfg.DatabaseFile = filepath.Join("focus_helper_debug.db")
 	}
-
+	currentConfig = cfg
 	return cfg, nil
+}
+
+func GetConfig() *models.Config {
+	return currentConfig
 }

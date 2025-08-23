@@ -19,6 +19,7 @@
   "low": "baixo",
   "medium": "médio",
   "high": "alto",
+  "critical": "crítico",
   "time_periods": {
     "early_morning": "da madrugada",
     "morning": "da manhã",

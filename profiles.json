@@ -16,7 +16,7 @@
         "max_random_question": "90m",
         "reduce_os_sounds": true,
         "wellbeing_questions_enabled": false,
-        "ia_detector_enabled": true,
+        "ia_detector_enabled": false,
         "hyperfocus_min_duration": "30m",
         "database_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.db",
         "log_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.log",
@@ -25,20 +25,20 @@
         "activation_word": "comando",
         "vad_threshold": 0.02,
         "vad_silence_timeout": "1500ms",
-       	"whisper_model_path": "/home/robertocpaes/Projects/focus-helper/whisper.cpp/models/ggml-base.bin",
+        "whisper_model_path": "/home/robertocpaes/Projects/focus-helper/whisper.cpp/models/ggml-base.bin",
         "hyperfocus_associations": {
-                "PHPStorm": "Programação",
-                "Visual Studio Code": "Programação",
-                "GoLand": "Programação",
-                "IntelliJ IDEA": "Programação",
-                "Figma": "Design",
-                "Photoshop": "Design",
-                "Terminal": "Sistema/DevOps",
-                "Docker": "Sistema/DevOps",
-                "Notepad":"Anotação",
-                "iTerm": "Sistema/DevOps",
-                "Google Chrome": "Navegação/Pesquisa",
-                "Firefox": "Navegação/Pesquisa"
+            "PHPStorm": "Programação",
+            "Visual Studio Code": "Programação",
+            "GoLand": "Programação",
+            "IntelliJ IDEA": "Programação",
+            "Figma": "Design",
+            "Photoshop": "Design",
+            "Terminal": "Sistema/DevOps",
+            "Docker": "Sistema/DevOps",
+            "Notepad": "Anotação",
+            "iTerm": "Sistema/DevOps",
+            "Google Chrome": "Navegação/Pesquisa",
+            "Firefox": "Navegação/Pesquisa"
         },
         "alert_levels": [
             {
@@ -49,8 +49,8 @@
                     {
                         "type": "YOUTUBE_AUDIO",
                         "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
-                        "start_at": "0:00", 
-                        "end_at": "0:03" 
+                        "start_at": "0:00",
+                        "end_at": "0:03"
                     },
                     {
                         "type": "SPEAK_IA",
@@ -62,19 +62,19 @@
                 "enabled": true,
                 "level": "medium",
                 "threshold": "90m",
-                "multiplier": 1.5,
+                "tolerance": 1.5,
                 "actions": [
                     {
                         "type": "YOUTUBE_AUDIO",
                         "url": "https://www.youtube.com/watch?v=dbAFUdqCIuU",
-                        "start_at": "0:03", 
-                        "end_at": "0:04" 
+                        "start_at": "0:03",
+                        "end_at": "0:04"
                     },
                     {
                         "type": "YOUTUBE_AUDIO",
                         "url": "https://www.youtube.com/watch?v=dbAFUdqCIuU",
-                        "start_at": "0:03", 
-                        "end_at": "0:04" 
+                        "start_at": "0:03",
+                        "end_at": "0:04"
                     },
                     {
                         "type": "SPEAK_IA",
@@ -86,8 +86,14 @@
                 "enabled": true,
                 "level": "high",
                 "threshold": "2h30m",
-                "multiplier": 2.5,
+                "tolerance": 2.5,
                 "actions": [
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:19",
+                        "end_at": "0:21"
+                    },
                     {
                         "type": "SOUND",
                         "sound_file": "alert_level_3.mp3"
@@ -98,7 +104,7 @@
                         "popup_message": "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."
                     },
                     {
-                        "type": "SPEAK_IA",
+                        "type": "SPEAK_VOICE",
                         "llama_prompt": "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."
                     }
                 ]
@@ -107,10 +113,10 @@
                 "enabled": true,
                 "level": "critical",
                 "threshold": "4h",
-                "multiplier": 5.0,
+                "tolerance": 5.0,
                 "actions": [
                     {
-                        "type": "SPEAK_IA",
+                        "type": "SPEAK_VOICE",
                         "llama_prompt": "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."
                     }
                 ]
@@ -135,16 +141,16 @@
         "reduce_os_sounds": true,
         "wellbeing_questions_enabled": false,
         "hyperfocus_associations": {
-               "PHPStorm": "Programação",
-                "Visual Studio Code": "Programação",
-                "GoLand": "Programação",
-                "IntelliJ IDEA": "Programação",
-                "Figma": "Design",
-                "Photoshop": "Design",
-                "Terminal": "Sistema/DevOps",
-                "iTerm": "Sistema/DevOps",
-                "Google Chrome": "Navegação/Pesquisa",
-                "Firefox": "Navegação/Pesquisa"
+            "PHPStorm": "Programação",
+            "Visual Studio Code": "Programação",
+            "GoLand": "Programação",
+            "IntelliJ IDEA": "Programação",
+            "Figma": "Design",
+            "Photoshop": "Design",
+            "Terminal": "Sistema/DevOps",
+            "iTerm": "Sistema/DevOps",
+            "Google Chrome": "Navegação/Pesquisa",
+            "Firefox": "Navegação/Pesquisa"
         },
         "alert_levels": [
             {

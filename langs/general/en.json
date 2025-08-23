@@ -18,6 +18,7 @@
   "low": "low",
   "medium": "medium",
   "high": "high",
+  "critical": "critical",
   "time_periods": {
     "early_morning": "in the early morning",
     "morning": "in the morning",

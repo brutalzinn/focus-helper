@@ -2,8 +2,10 @@
 package voice
 
 import (
+	"context"
 	"fmt"
 	"focus-helper/pkg/models"
+	"focus-helper/pkg/state"
 	"log"
 	"strings"
 	"sync"
@@ -51,7 +53,7 @@ type audioRingBuffer struct {
 type Listener struct {
 	stream          *portaudio.Stream
 	transcriber     *Transcriber
-	appConfig       *models.Config
+	appState        *state.AppState
 	commands        []Command
 	inBuffer        []int16
 	frameBuffer     []float32
@@ -63,9 +65,6 @@ type Listener struct {
 	closeOnce       sync.Once
 	state           string
 	stateMu         sync.Mutex
-}
-type ListenerDependencies struct {
-	AppConfig *models.Config
 }
 
 // DISCLAIMER: SOMETHING CAN THORW SEGMENTION FAULT. wtf many GOROUTINES FOR EVERYTHING.
@@ -98,7 +97,7 @@ func (r *audioRingBuffer) WriteContentsTo(dst []float32) int {
 	return copied
 }
 
-func NewListener(cfg *models.Config) (*Listener, error) {
+func NewListener(appState *state.AppState) (*Listener, error) {
 	log.Println("Initializing Voice Listener...")
 
 	in := make([]int16, frameSamples)
@@ -143,15 +142,15 @@ func NewListener(cfg *models.Config) (*Listener, error) {
 		return nil, err
 	}
 
-	transcriber, err := NewTranscriber(cfg.WhisperModelPath)
+	transcriber, err := NewTranscriber(appState.AppConfig.WhisperModelPath)
 	if err != nil {
 		stream.Close()
 		return nil, err
 	}
 	listener := &Listener{
 		state:           "idle",
-		appConfig:       cfg,
 		stream:          stream,
+		appState:        appState,
 		transcriber:     transcriber,
 		commands:        make([]Command, 0),
 		inBuffer:        in,
@@ -165,37 +164,43 @@ func NewListener(cfg *models.Config) (*Listener, error) {
 	return listener, nil
 }
 
-func (l *Listener) AppConfig() *models.Config {
-	return l.appConfig
-}
-
-func (l *Listener) ListenContinuously() {
+func (l *Listener) ListenContinuously(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.Println("Voice command listener started...")
 	l.wg.Add(transcriptionWorkers)
 	for i := 0; i < transcriptionWorkers; i++ {
-		go l.transcriptionWorker()
+		go l.transcriptionWorker(ctx)
 	}
 	l.wg.Add(1)
-	go l.audioCaptureLoop()
+	go l.audioCaptureLoop(ctx)
 	if err := l.stream.Start(); err != nil {
 		log.Printf("Error starting audio stream: %v", err)
 		l.Close()
 	}
+	<-ctx.Done()
+	log.Println("Shutdown signal received, closing voice listener.")
+	l.Close()
 }
 
-func (l *Listener) audioCaptureLoop() {
+func (l *Listener) audioCaptureLoop(ctx context.Context) {
 	defer l.wg.Done()
 	var segmentPos int
 	var speechActive bool
 	var speechFrames, silenceFrames int
 	for {
 		select {
+		case <-ctx.Done():
+			log.Println("Audio capture loop stopping due to context cancellation.")
+			return
 		case <-l.stopCh:
 			log.Println("Audio capture loop stopped.")
 			return
 		default:
 			if err := l.stream.Read(); err != nil {
 				log.Printf("Error reading from audio stream: %v", err)
+				return
+			}
+			if !l.appState.IsListening {
 				continue
 			}
 			i16ToF32(l.inBuffer, l.frameBuffer)
@@ -234,10 +239,13 @@ func (l *Listener) audioCaptureLoop() {
 	}
 }
 
-func (l *Listener) transcriptionWorker() {
+func (l *Listener) transcriptionWorker(ctx context.Context) {
 	defer l.wg.Done()
 	for {
 		select {
+		case <-ctx.Done():
+			log.Println("Transcription worker stopping due to context cancellation.")
+			return
 		case <-l.stopCh:
 			log.Println("Transcription worker stopped.")
 			return
@@ -264,8 +272,8 @@ func (l *Listener) processCommands(text string) {
 			if !strings.Contains(normText, phrase) {
 				continue
 			}
-			if phrase == normalizeText(l.appConfig.ActivationWord) {
-				stopWordNormalized := normalizeText(l.appConfig.StopWord)
+			if phrase == normalizeText(l.appState.AppConfig.ActivationWord) {
+				stopWordNormalized := normalizeText(l.appState.AppConfig.StopWord)
 				if strings.Contains(normText, stopWordNormalized) {
 					for _, cmd := range l.commands {
 						for _, phrase := range cmd.Phrases {
@@ -324,16 +332,20 @@ func (l *Listener) GetState() string {
 
 func (l *Listener) Close() {
 	l.closeOnce.Do(func() {
-		log.Println("Closing Voice Listener...")
-		close(l.stopCh)
+		log.Println("Closing Voice Listener resources...")
 		if l.stream != nil {
 			l.stream.Stop()
 			l.stream.Close()
 		}
+		close(l.transcriptionCh)
 		l.wg.Wait()
 		if l.transcriber != nil {
 			l.transcriber.Close()
 		}
 		log.Println("Voice Listener closed.")
 	})
+}
+
+func (l *Listener) AppConfig() *models.Config {
+	return l.appState.AppConfig
 }

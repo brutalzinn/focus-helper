@@ -2,7 +2,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -28,6 +28,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -36,17 +37,17 @@ import (
 )
 
 type appComponents struct {
-	actionExecutor     *actions.Executor
-	activityMonitor    *activity.Monitor
-	appState           *state.AppState
-	db                 *sql.DB
-	notifier           notifications.Notifier
-	variablesProcessor *variables.Processor
+	activityMonitor *activity.Activity
+	appState        *state.AppState
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	defer utils.ClearTempAudioOnExit()
-
+	defer portaudio.Terminate()
 	appConfig, err := loadConfiguration()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %v", err)
@@ -60,19 +61,19 @@ func main() {
 		log.Println("!!!!!!!!!! RUNNING IN DEBUG MODE !!!!!!!!!!")
 	}
 
-	components, err := initComponents(appConfig)
+	components, err := initComponents(ctx, &wg, appConfig)
 	if err != nil {
 		log.Fatalf("Error initializing components: %v", err)
 	}
-	defer components.db.Close()
-
-	setupCustomVariables(components.variablesProcessor, components.appState, appConfig)
-
-	startServices(appConfig, components)
-
-	waitForShutdownSignal()
-	// portaudio.Terminate()
-	log.Println("Interrupt signal received, stopping all.")
+	defer components.appState.DB.Close()
+	actions.Init(components.appState)
+	setupCustomVariables(components.appState)
+	startServices(ctx, &wg, components)
+	<-sigChan
+	log.Println("Interrupt signal received, initiating shutdown...")
+	cancel()
+	wg.Wait()
+	log.Println("All services stopped gracefully. Exiting.")
 }
 
 func loadConfiguration() (*models.Config, error) {
@@ -87,127 +88,112 @@ func loadConfiguration() (*models.Config, error) {
 	return config.LoadConfig(*profileFlag, *debugFlag)
 }
 
-func initComponents(appConfig *models.Config) (*appComponents, error) {
+func initComponents(ctx context.Context, wg *sync.WaitGroup, appConfig *models.Config) (*appComponents, error) {
 	db, err := database.Init(appConfig.DatabaseFile)
 	if err != nil {
 		return nil, err
 	}
-
 	notifier := notifications.NewDesktopNotifier()
 	llmAdapter, err := llm.NewAdapter(appConfig.IAModel)
 	if err != nil {
 		return nil, err
 	}
-
 	variablesProcessor := variables.NewProcessor()
-
 	currentPersona, err := persona.GetPersona(appConfig.PersonaName, variablesProcessor)
 	if err != nil {
 		return nil, err
 	}
-
 	langsPath := filepath.Join(config.GetUserConfigPath(), "langs")
-
 	lm, err := language.NewManager(langsPath, appConfig.PersonaName, appConfig.Language)
 	if err != nil {
 		log.Print("faild to load language manager")
 		return nil, err
 	}
-
 	appStateDependencies := state.AppStateDependencies{
-		Persona:       currentPersona,
-		Language:      lm,
-		LLMAdapter:    &llmAdapter,
-		TextProcessor: variablesProcessor,
+		Persona:      currentPersona,
+		Language:     lm,
+		LLMAdapter:   llmAdapter,
+		VarProcessor: variablesProcessor,
+		DB:           db,
+		Notifier:     notifier,
+		AppConfig:    appConfig,
 	}
 	appState := state.NewAppState(appStateDependencies)
-	go appState.EventLoop()
-	executorDeps := actions.ExecutorDependencies{
-		AppConfig:    appConfig,
-		AppState:     appState,
-		VarProcessor: variablesProcessor,
-	}
-	actionExecutor := actions.NewExecutor(executorDeps)
-
-	activityMonitorDeps := activity.MonitorDependencies{
-		DB:             db,
-		ActionExecutor: actionExecutor,
-		AppState:       appState,
-		LLMAdapter:     llmAdapter,
-		AppConfig:      appConfig,
-	}
-	activityMonitor := activity.NewMonitor(activityMonitorDeps)
-
+	wg.Add(1)
+	go appState.EventLoop(ctx, wg)
+	fmt.Println("Event loop started in the background.")
+	activityMonitor := activity.NewActivity(appState)
 	return &appComponents{
-		actionExecutor:     actionExecutor,
-		activityMonitor:    activityMonitor,
-		appState:           appState,
-		db:                 db,
-		notifier:           notifier,
-		variablesProcessor: variablesProcessor,
+		activityMonitor: activityMonitor,
+		appState:        appState,
 	}, nil
 }
 
-func startServices(appConfig *models.Config, c *appComponents) {
-	go server.StartServer()
-	go c.activityMonitor.MonitorActivityLoop()
-
-	if appConfig.WellbeingQuestionsEnabled {
-		go sheduler.SchedulerLoop(appConfig, c.db, c.actionExecutor, c.notifier)
+func startServices(ctx context.Context, wg *sync.WaitGroup, c *appComponents) {
+	wg.Add(1)
+	go server.StartServer(ctx, wg)
+	wg.Add(1)
+	go c.activityMonitor.ActivityLoop(ctx, wg)
+	if c.appState.AppConfig.WellbeingQuestionsEnabled {
+		wg.Add(1)
+		go sheduler.SchedulerLoop(ctx, wg, c.appState)
 	} else {
 		log.Println("Wellbeing questions disabled.")
 	}
 
-	if appConfig.ListenerEnabled {
-		portaudio.Initialize()
-		listener, err := voice.NewListener(appConfig, c.appState)
+	if c.appState.AppConfig.ListenerEnabled {
+		err := portaudio.Initialize()
+		if err != nil {
+			log.Printf("Cant initliaze portaudio")
+		}
+		listener, err := voice.NewListener(c.appState)
 		if err != nil {
 			log.Fatalf("Failed to initialize voice listener: %v", err)
 		}
-		c.appState.IsListening
-		registerVoiceCommands(listener, c)
-		go listener.ListenContinuously()
+		registerVoiceCommands(listener, c.appState)
+		wg.Add(1)
+		go listener.ListenContinuously(ctx, wg)
 	} else {
 		log.Println("Voice command listener is disabled in the config.")
 	}
 
-	welcomeAction := models.ActionConfig{
-		Type: models.ActionSpeak,
-		Text: c.appState.Language.Get("hello_prompt"),
+	startActions := []models.ActionConfig{
+		{
+			Type:      models.ActionSound,
+			SoundFile: "airplane_communication_start.mp3",
+		},
+		{
+			Type: models.ActionSpeak,
+			Text: c.appState.Language.Get("hello_prompt"),
+		},
 	}
-	go c.actionExecutor.Execute(welcomeAction)
+	go actions.ExecuteSequence(startActions)
 }
 
-func waitForShutdownSignal() {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-	<-sig
-}
-
-func setupCustomVariables(processor *variables.Processor, appState *state.AppState, appConfig *models.Config) {
-	processor.RegisterHandler("level", func(context ...string) string {
+func setupCustomVariables(appState *state.AppState) {
+	appState.VarProcessor.RegisterHandler("level", func(context ...string) string {
 		if appState.Hyperfocus != nil {
 			return appState.Language.Get(appState.Hyperfocus.Level)
 		}
 		return appState.Language.Get("no_hyperfocus")
 	})
-	processor.RegisterHandler("activity_duration", func(context ...string) string {
+	appState.VarProcessor.RegisterHandler("activity_duration", func(context ...string) string {
 		usageDuration := time.Since(appState.ContinuousUsageStartTime)
 		return utils.FormatDuration(usageDuration)
 	})
-	processor.RegisterHandler("mode", func(context ...string) string {
-		if appConfig.DEBUG {
+	appState.VarProcessor.RegisterHandler("mode", func(context ...string) string {
+		if appState.AppConfig.DEBUG {
 			return appState.Language.Get("debug_on")
 		}
 		return appState.Language.Get("debug_off")
 	})
-	processor.RegisterHandler("username", func(context ...string) string {
-		return appConfig.Username
+	appState.VarProcessor.RegisterHandler("username", func(context ...string) string {
+		return appState.AppConfig.Username
 	})
-	processor.RegisterHandler("person", func(context ...string) string {
+	appState.VarProcessor.RegisterHandler("person", func(context ...string) string {
 		return appState.Persona.GetName()
 	})
-	processor.RegisterHandler("date", func(context ...string) string {
+	appState.VarProcessor.RegisterHandler("date", func(context ...string) string {
 		now := time.Now()
 		monthName := appState.Language.Get(fmt.Sprintf("months.%d", now.Month()))
 		dateFormat := appState.Language.Get("date_format")
@@ -216,62 +202,63 @@ func setupCustomVariables(processor *variables.Processor, appState *state.AppSta
 		result = strings.ReplaceAll(result, "{year}", fmt.Sprintf("%d", now.Year()))
 		return result
 	})
-	processor.RegisterHandler("time", func(context ...string) string {
-		loc, _ := time.LoadLocation(appConfig.TimeLocation)
+	appState.VarProcessor.RegisterHandler("time", func(context ...string) string {
+		loc, _ := time.LoadLocation(appState.AppConfig.TimeLocation)
 		now := time.Now().In(loc)
 		return now.Format(appState.Language.Get("time_format"))
 	})
 }
-func registerVoiceCommands(listener *voice.Listener, appComponent *appComponents) {
+func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 
 	wakeWord := listener.AppConfig().ActivationWord
 	if wakeWord != "" {
 		listener.RegisterCommand(func(text string) {
 			wakeAction := models.ActionConfig{
 				Type: models.ActionSpeak,
-				Text: appComponent.appState.Language.Get("command_ready"),
+				Text: appState.Language.Get("command_ready"),
 			}
-			appComponent.actionExecutor.Execute(wakeAction)
+			actions.Execute(wakeAction)
 		}, wakeWord, "torre", "comand", "comanda")
 	}
 	stopWord := listener.AppConfig().StopWord
 	listener.RegisterCommand(func(text string) {
 		confirmStop := models.ActionConfig{
 			Type: models.ActionSpeak,
-			Text: appComponent.appState.Language.Get("command_stop"),
+			Text: appState.Language.Get("command_stop"),
 		}
-		appComponent.actionExecutor.Execute(confirmStop)
+		actions.Execute(confirmStop)
 		audio.StopCurrentSound()
 		stopAction := models.ActionConfig{
 			Type: models.ActionStop,
 		}
-		appComponent.actionExecutor.Execute(stopAction)
+		actions.Execute(stopAction)
 	}, stopWord, "parar", "cancel", "stop", "para", "para!")
 
 	listener.RegisterCommand(func(text string) {
 		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
 		protocolMayday := models.ActionConfig{
 			Type:   models.ActionSpeakIA,
-			Prompt: appComponent.appState.Language.Get("command_mayday"),
+			Prompt: appState.Language.Get("command_mayday"),
 		}
-		appComponent.actionExecutor.Execute(protocolMayday)
+		database.LogMaydayEvent(appState.DB)
+		actions.Execute(protocolMayday)
 	}, "mayday", "emergencia")
 
 	listener.RegisterCommand(func(text string) {
 		log.Println("Time request command detected.")
 		timeAction := models.ActionConfig{
 			Type: models.ActionSpeak,
-			Text: appComponent.appState.Language.Get("command_time"),
+			Text: appState.Language.Get("command_time"),
 		}
-		appComponent.actionExecutor.Execute(timeAction)
+		actions.Execute(timeAction)
 	}, "tempo", "time", "que horas são")
 
 	listener.RegisterCommand(func(text string) {
 		log.Println("Focus check command detected.")
 		focusAction := models.ActionConfig{
 			Type: models.ActionSpeak,
-			Text: appComponent.appState.Language.Get("command_focus"),
+			Text: appState.Language.Get("command_focus"),
 		}
-		appComponent.actionExecutor.Execute(focusAction)
+		actions.Execute(focusAction)
 	}, "check", "checagem", "checar")
 }

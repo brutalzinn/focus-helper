@@ -1,5 +1,3 @@
-// pkg/actions/executor.go
-// REFACTORED: Sunday, August 10, 2025
 package actions
 
 import (
@@ -15,64 +13,53 @@ import (
 	"focus-helper/pkg/audio"
 	"focus-helper/pkg/common"
 	"focus-helper/pkg/config"
-	"focus-helper/pkg/language"
-	"focus-helper/pkg/llm"
 	"focus-helper/pkg/models"
-	"focus-helper/pkg/notifications"
 	"focus-helper/pkg/persona"
 	"focus-helper/pkg/state"
-	"focus-helper/pkg/variables"
 )
 
-type ExecutorDependencies struct {
-	AppConfig    *models.Config
-	Language     *language.LanguageManager
-	VarProcessor *variables.Processor
-	Notifier     notifications.Notifier
-	LLMAdapter   llm.LLMAdapter
-	AppState     *state.AppState
+var (
+	mu               sync.Mutex
+	currentAppState  *state.AppState
+	actionCancelFn   context.CancelFunc
+	sequenceCancelFn context.CancelFunc
+)
+
+func Init(appState *state.AppState) {
+	currentAppState = appState
 }
 
-type Executor struct {
-	deps     ExecutorDependencies
-	cancelFn context.CancelFunc
-	mu       sync.Mutex
-}
-
-func NewExecutor(deps ExecutorDependencies) *Executor {
-	return &Executor{deps: deps}
-}
-func (e *Executor) Execute(action models.ActionConfig) error {
-	e.mu.Lock()
+func Execute(action models.ActionConfig) error {
+	mu.Lock()
+	currentAppState.EventChannel <- state.AppEvent{Type: "STOP_LISTENING"}
+	ctx, cancel := context.WithCancel(context.Background())
+	actionCancelFn = cancel
 	defer func() {
 		fmt.Println("[Executor] Sending START_LISTENING event.")
-		e.deps.AppState.EventChannel <- state.AppEvent{Type: "START_LISTENING"}
-		e.mu.Unlock()
+		currentAppState.EventChannel <- state.AppEvent{Type: "START_LISTENING"}
+		mu.Unlock()
 	}()
-	e.deps.AppState.EventChannel <- state.AppEvent{Type: "STOP_LISTENING"}
-	ctx, cancel := context.WithCancel(context.Background())
-	e.cancelFn = cancel
 	log.Printf("EXECUTING ACTION: Type=%s", action.Type)
 	switch action.Type {
 	case models.ActionSound:
-		return e.executeSound(ctx, action)
+		return executeSound(ctx, action)
 	case models.ActionStop:
-		return e.StopCurrentActions()
+		return StopCurrentActions()
 	case models.ActionSpeakIA:
-		return e.executeSpeakIAAction(ctx, action)
+		return executeSpeakIAAction(ctx, action)
 	case models.ActionSpeak:
-		return e.executeSpeakAction(ctx, action)
+		return executeSpeakAction(ctx, action)
 	case models.ActionYoutubeAudio:
-		return e.executeYouTubeAudio(ctx, action)
+		return executeYouTubeAudio(ctx, action)
 	case models.ActionPopup:
-		_, err := e.deps.Notifier.Question(action.PopupTitle, action.PopupMessage)
+		_, err := currentAppState.Notifier.Question(action.PopupTitle, action.PopupMessage)
 		return err
 	default:
 		return fmt.Errorf("wrong action: %s", action.Type)
 	}
 }
 
-func (e *Executor) executeSound(ctx context.Context, action models.ActionConfig) error {
+func executeSound(ctx context.Context, action models.ActionConfig) error {
 	done := make(chan error)
 	go func() {
 		done <- audio.PlaySound(audio.GetAssetPath(action.SoundFile), 1.0)
@@ -87,16 +74,16 @@ func (e *Executor) executeSound(ctx context.Context, action models.ActionConfig)
 	}
 }
 
-func (e *Executor) executeSpeakIAAction(ctx context.Context, action models.ActionConfig) error {
+func executeSpeakIAAction(ctx context.Context, action models.ActionConfig) error {
 	done := make(chan error)
 	go func() {
-		currentPersona, err := persona.GetPersona(e.deps.AppConfig.PersonaName, e.deps.VarProcessor)
+		currentPersona, err := persona.GetPersona(currentAppState.AppConfig.PersonaName, currentAppState.VarProcessor)
 		if err != nil {
 			done <- fmt.Errorf("failed to get persona: %w", err)
 			return
 		}
-		taskPrompt, _ := currentPersona.GetPrompt(e.deps.Language, action.Prompt)
-		finalText, err := e.deps.LLMAdapter.Generate(taskPrompt)
+		taskPrompt, _ := currentPersona.GetPrompt(currentAppState.Language, action.Prompt)
+		finalText, err := currentAppState.LLMAdapter.Generate(taskPrompt)
 		if err != nil {
 			log.Printf("WARNING: LLM generation failed, falling back to basic prompt: %v", err)
 		}
@@ -117,15 +104,15 @@ func (e *Executor) executeSpeakIAAction(ctx context.Context, action models.Actio
 	}
 }
 
-func (e *Executor) executeSpeakAction(ctx context.Context, action models.ActionConfig) error {
+func executeSpeakAction(ctx context.Context, action models.ActionConfig) error {
 	done := make(chan error)
 	go func() {
-		currentPersona, err := persona.GetPersona(e.deps.AppConfig.PersonaName, e.deps.VarProcessor)
+		currentPersona, err := persona.GetPersona(currentAppState.AppConfig.PersonaName, currentAppState.VarProcessor)
 		if err != nil {
 			log.Printf("error on get person: %v", err)
 			done <- err
 		}
-		finalText, err := currentPersona.GetText(e.deps.Language, action.Text)
+		finalText, err := currentPersona.GetText(currentAppState.Language, action.Text)
 		if err != nil {
 			log.Printf("error on processing audio: %v", err)
 			done <- err
@@ -133,9 +120,9 @@ func (e *Executor) executeSpeakAction(ctx context.Context, action models.ActionC
 		err = currentPersona.ProcessAudio(finalText)
 		if err != nil {
 			log.Printf("error on processing audio: %v", err)
+			done <- err
 		}
 		done <- nil
-
 	}()
 	select {
 	case <-ctx.Done():
@@ -147,7 +134,7 @@ func (e *Executor) executeSpeakAction(ctx context.Context, action models.ActionC
 	}
 }
 
-func (e *Executor) executeYouTubeAudio(ctx context.Context, action models.ActionConfig) error {
+func executeYouTubeAudio(ctx context.Context, action models.ActionConfig) error {
 	done := make(chan error)
 	go func() {
 		url := strings.TrimSpace(action.URL)
@@ -197,14 +184,45 @@ func (e *Executor) executeYouTubeAudio(ctx context.Context, action models.Action
 	}
 }
 
-func (e *Executor) StopCurrentActions() error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if e.cancelFn != nil {
-		log.Println("Stopping all running actions...")
-		e.cancelFn()
-		e.cancelFn = nil
-		audio.StopCurrentSound()
+func StopCurrentActions() error {
+	mu.Lock()
+	defer mu.Unlock()
+	log.Println("Stopping all running actions...")
+	if actionCancelFn != nil {
+		actionCancelFn()
+		actionCancelFn = nil
 	}
+	if sequenceCancelFn != nil {
+		sequenceCancelFn()
+		sequenceCancelFn = nil
+	}
+	audio.StopCurrentSound()
 	return nil
+}
+
+func ExecuteSequence(actions []models.ActionConfig) {
+	ctx, cancel := context.WithCancel(context.Background())
+	mu.Lock()
+	sequenceCancelFn = cancel
+	mu.Unlock()
+	defer func() {
+		mu.Lock()
+		sequenceCancelFn = nil
+		mu.Unlock()
+		log.Println("--- Action Sequence Finished ---")
+	}()
+	log.Println("--- Starting Action Sequence ---")
+	for i, action := range actions {
+		select {
+		case <-ctx.Done():
+			log.Println("Action sequence cancelled.")
+			return
+		default:
+		}
+		log.Printf("Executing action %d/%d of sequence...", i+1, len(actions))
+		if err := Execute(action); err != nil {
+			log.Printf("Stopping sequence due to action error: %v", err)
+			return
+		}
+	}
 }
