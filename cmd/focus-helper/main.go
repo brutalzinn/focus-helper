@@ -243,25 +243,17 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 			},
 			{
 				Type: models.ActionSpeak,
-				Text: appState.Language.Get("mayday_alert"),
-			},
-			{
-				Type:   models.ActionSpeakIA,
-				Prompt: appState.Language.Get("command_mayday"),
+				Text: "Declare o estado de mayday com sim ou não",
 			},
 		}
 		actions.ExecuteSequence(startActions)
-		actions.Execute(models.ActionConfig{
-			Type: models.ActionSpeak,
-			Text: "Declare o estado de mayday com sim ou não",
-		})
 		select {
 		case response := <-ctx.Response:
 			if strings.Contains(response, "sim") {
 				log.Println("User confirmed Mayday alert.")
 				actions.Execute(models.ActionConfig{
 					Type: models.ActionSpeak,
-					Text: "Mayday confirmed. Emergency protocol continues.",
+					Text: "Mayday confirmado. Protocolo de emergência ativo.",
 				})
 				database.LogMaydayEvent(appState.DB)
 			} else {

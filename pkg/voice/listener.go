@@ -20,7 +20,7 @@ const (
 	StateProcessing = "processing"
 )
 
-var wakeTimeout = 15 * time.Second
+var wakeTimeout = 30 * time.Second
 
 // --- Constants for Audio Processing ---
 const (
@@ -185,14 +185,22 @@ func (l *Listener) ListenContinuously(ctx context.Context, wg *sync.WaitGroup) {
 	log.Println("Voice command listener started...")
 	l.wg.Add(transcriptionWorkers)
 	for i := 0; i < transcriptionWorkers; i++ {
-		go l.transcriptionWorker(ctx)
+		go func() {
+			defer l.wg.Done()
+			l.transcriptionWorker(ctx)
+		}()
 	}
 	l.wg.Add(1)
-	go l.audioCaptureLoop(ctx)
+	go func() {
+		defer l.wg.Done()
+		l.audioCaptureLoop(ctx)
+	}()
+
 	if err := l.stream.Start(); err != nil {
 		log.Printf("Error starting audio stream: %v", err)
 		l.Close()
 	}
+
 	<-ctx.Done()
 	log.Println("Shutdown signal received, closing voice listener.")
 	l.Close()
@@ -286,11 +294,10 @@ func (l *Listener) processCommands(text string) {
 		return
 	}
 
-	// Check if any command is waiting for a response
 	l.pendingMu.Lock()
 	for cmd, respCh := range l.pendingResponses {
 		select {
-		case respCh <- text:
+		case respCh <- normText:
 			log.Printf("Delivered speech to pending command: %v", cmd.Phrases)
 		default:
 			log.Printf("Pending command response channel full: %v", cmd.Phrases)
@@ -300,7 +307,6 @@ func (l *Listener) processCommands(text string) {
 	}
 	l.pendingMu.Unlock()
 
-	// Match a new command
 	var matchedCommand *Command
 	found := false
 	for i := range l.commands {
@@ -385,7 +391,10 @@ func (l *Listener) Close() {
 }
 
 func (l *Listener) WakeUp() {
-	actions.StopCurrentActions()
+	err := actions.StopCurrentActions()
+	if err != nil {
+		log.Printf("Cant stop actions")
+	}
 	l.SetState(StateAwake)
 	log.Println("Listener is now AWAKE, listening for commands.")
 	if l.wakeTimer != nil {
