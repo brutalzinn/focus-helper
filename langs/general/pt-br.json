@@ -41,6 +41,9 @@
     "11": "onze",
     "12": "doze"
   },
+  "minute": "minuto",
+  "hour": "hora",
+  "second": "segundo",
   "debug_on": "modo de teste",
   "debug_off": "modo de teste inativo",
   "detector_prompt": "Você é um Analista de Hiperfoco. Sua tarefa é analisar a atividade do usuário no computador e determinar o nível de intervenção correto.\nExistem %d níveis de alerta disponíveis, indexados de 0 a %d.\n- O índice 0 é o aviso mais suave.\n- O índice %d é a intervenção de emergência mais crítica.\n\nCom base no histórico do usuário, na aplicação em foco e no tempo de uso contínuo, você deve retornar um único número representando o índice do alerta apropriado. Se nenhum alerta for necessário, retorne -1."

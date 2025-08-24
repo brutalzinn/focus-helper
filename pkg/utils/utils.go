@@ -10,18 +10,18 @@ import (
 	"time"
 )
 
-func FormatDuration(d time.Duration) string {
+func FormatDuration(d time.Duration, hUnit, mUnit, sUnit string) string {
 	h := int(d.Hours())
 	m := int(d.Minutes()) % 60
 	s := int(d.Seconds()) % 60
 
 	if h > 0 {
-		return fmt.Sprintf("%dh %dm %ds", h, m, s)
+		return fmt.Sprintf("%d%s %d%s %d%s", h, hUnit, m, mUnit, s, sUnit)
 	}
 	if m > 0 {
-		return fmt.Sprintf("%dm %ds", m, s)
+		return fmt.Sprintf("%d%s %d%s", m, mUnit, s, sUnit)
 	}
-	return fmt.Sprintf("%ds", s)
+	return fmt.Sprintf("%d%s", s, sUnit)
 }
 
 func ClearTempAudioOnExit() {

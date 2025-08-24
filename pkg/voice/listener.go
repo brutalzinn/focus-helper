@@ -40,8 +40,9 @@ const (
 var wakeTimeout = 15 * time.Second
 
 type Command struct {
-	Phrases  []string
-	Callback func(transcribedText string)
+	Phrases      []string
+	Callback     func(transcribedText string)
+	IsActivation bool
 }
 
 type audioRingBuffer struct {
@@ -200,9 +201,6 @@ func (l *Listener) audioCaptureLoop(ctx context.Context) {
 				log.Printf("Error reading from audio stream: %v", err)
 				return
 			}
-			if !l.appState.IsListening {
-				continue
-			}
 			i16ToF32(l.inBuffer, l.frameBuffer)
 			l.preRollBuffer.PushFrame(l.frameBuffer)
 			energy := rmsEnergy(l.frameBuffer)
@@ -268,45 +266,28 @@ func (l *Listener) processCommands(text string) {
 	normText := normalizeText(text)
 	log.Printf("Normalized speech: '%s'", normText)
 	for _, command := range l.commands {
+		var matchedPhrase string
 		for _, phrase := range command.Phrases {
-			if !strings.Contains(normText, phrase) {
-				continue
+			if strings.Contains(normText, phrase) {
+				matchedPhrase = phrase
+				break
 			}
-			if phrase == normalizeText(l.appState.AppConfig.ActivationWord) {
-				stopWordNormalized := normalizeText(l.appState.AppConfig.StopWord)
-				if strings.Contains(normText, stopWordNormalized) {
-					for _, cmd := range l.commands {
-						for _, phrase := range cmd.Phrases {
-							if normalizeText(phrase) == stopWordNormalized {
-								go cmd.Callback(text)
-								break
-							}
-						}
-					}
-					l.SetState("idle")
-					return
-				}
-				if l.GetState() == "idle" {
-					log.Printf("Wake word '%s' detected — entering listening mode.", phrase)
-					l.SetState("listening")
-					go func() {
-						command.Callback(text)
-						log.Printf("Activation callback completed, starting wake timeout: %s", wakeTimeout)
-						time.Sleep(wakeTimeout)
-						if l.GetState() == "listening" {
-							log.Println("Wake timeout expired — returning to idle.")
-							l.SetState("idle")
-						}
-					}()
-				}
-				return
-			}
-
+		}
+		if matchedPhrase == "" {
+			continue
+		}
+		if command.IsActivation {
+			log.Printf("Activation phrase matched: '%s'. Executing callback.", matchedPhrase)
+			go command.Callback(text)
+			return
+		}
+		currentState := l.GetState()
+		if currentState == "listening" {
 			if l.GetState() == "action_running" {
-				log.Printf("Action in progress, ignoring command: '%s'", phrase)
+				log.Printf("Action in progress, ignoring command: '%s'", matchedPhrase)
 				return
 			}
-			log.Printf("Voice command matched for phrase: '%s'", phrase)
+			log.Printf("Command matched: '%s'. Executing callback.", matchedPhrase)
 			l.SetState("action_running")
 			go func() {
 				defer l.SetState("listening")
@@ -314,6 +295,8 @@ func (l *Listener) processCommands(text string) {
 			}()
 			return
 		}
+		log.Printf("Command phrase '%s' detected but ignored (current state: %s).", matchedPhrase, currentState)
+		return
 	}
 }
 

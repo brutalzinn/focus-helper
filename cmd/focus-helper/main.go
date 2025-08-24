@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"focus-helper/pkg/actions"
 	"focus-helper/pkg/activity"
-	"focus-helper/pkg/audio"
 	"focus-helper/pkg/config"
 	"focus-helper/pkg/database"
 	"focus-helper/pkg/language"
@@ -179,7 +178,12 @@ func setupCustomVariables(appState *state.AppState) {
 	})
 	appState.VarProcessor.RegisterHandler("activity_duration", func(context ...string) string {
 		usageDuration := time.Since(appState.ContinuousUsageStartTime)
-		return utils.FormatDuration(usageDuration)
+		hoursUnit := appState.Language.Get("hour")
+		minutesUnit := appState.Language.Get("minute")
+		secondsUnit := appState.Language.Get("second")
+		formatDuration := utils.FormatDuration(usageDuration, hoursUnit, minutesUnit, secondsUnit)
+		return formatDuration
+
 	})
 	appState.VarProcessor.RegisterHandler("mode", func(context ...string) string {
 		if appState.AppConfig.DEBUG {
@@ -212,29 +216,29 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 
 	wakeWord := listener.AppConfig().ActivationWord
 	if wakeWord != "" {
-		listener.RegisterCommand(func(text string) {
+		listener.RegisterWakeUpWord(func(text string) {
 			wakeAction := models.ActionConfig{
 				Type: models.ActionSpeak,
 				Text: appState.Language.Get("command_ready"),
 			}
 			actions.Execute(wakeAction)
-		}, wakeWord, "torre", "comand", "comanda")
+		}, strings.Split(appState.Language.Get("command_wakeup_words"), ","))
 	}
-	stopWord := listener.AppConfig().StopWord
-	listener.RegisterCommand(func(text string) {
-		confirmStop := models.ActionConfig{
-			Type: models.ActionSpeak,
-			Text: appState.Language.Get("command_stop"),
-		}
-		actions.Execute(confirmStop)
-		audio.StopCurrentSound()
-		stopAction := models.ActionConfig{
-			Type: models.ActionStop,
-		}
-		actions.Execute(stopAction)
-	}, stopWord, "parar", "cancel", "stop", "para", "para!")
 
 	listener.RegisterCommand(func(text string) {
+		startActions := []models.ActionConfig{
+			{
+				Type: models.ActionStop,
+			},
+			{
+				Type:      models.ActionSound,
+				SoundFile: "airplane_communication_start.mp3",
+			},
+		}
+		go actions.ExecuteSequence(startActions)
+	}, strings.Split(listener.AppConfig().StopWord, ","))
+
+	listener.RegisterWakeUpWord(func(text string) {
 		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
 		protocolMayday := models.ActionConfig{
 			Type:   models.ActionSpeakIA,
@@ -242,7 +246,7 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 		}
 		database.LogMaydayEvent(appState.DB)
 		actions.Execute(protocolMayday)
-	}, "mayday", "emergencia")
+	}, strings.Split(appState.Language.Get("command_mayday_words"), ","))
 
 	listener.RegisterCommand(func(text string) {
 		log.Println("Time request command detected.")
@@ -251,7 +255,7 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 			Text: appState.Language.Get("command_time"),
 		}
 		actions.Execute(timeAction)
-	}, "tempo", "time", "que horas são")
+	}, strings.Split(appState.Language.Get("command_time_words"), ","))
 
 	listener.RegisterCommand(func(text string) {
 		log.Println("Focus check command detected.")
@@ -260,5 +264,5 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 			Text: appState.Language.Get("command_focus"),
 		}
 		actions.Execute(focusAction)
-	}, "check", "checagem", "checar")
+	}, strings.Split(appState.Language.Get("command_focus_words"), ","))
 }

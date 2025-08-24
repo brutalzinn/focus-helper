@@ -16,14 +16,28 @@ var accentReplacements = map[rune]rune{
 	'ç': 'c', 'Ç': 'c',
 }
 
-func (l *Listener) RegisterCommand(callback func(string), phrases ...string) {
+func (l *Listener) RegisterWakeUpWord(callback func(string), phrases []string) {
 	var normalized []string
 	for _, p := range phrases {
 		normalized = append(normalized, normalizeText(p))
 	}
 	l.commands = append(l.commands, Command{
-		Phrases:  normalized,
-		Callback: callback,
+		Phrases:      normalized,
+		Callback:     callback,
+		IsActivation: true,
+	})
+	log.Printf("Registered voice activation for phrases: %v", normalized)
+}
+
+func (l *Listener) RegisterCommand(callback func(string), phrases []string) {
+	var normalized []string
+	for _, p := range phrases {
+		normalized = append(normalized, normalizeText(p))
+	}
+	l.commands = append(l.commands, Command{
+		Phrases:      normalized,
+		Callback:     callback,
+		IsActivation: false,
 	})
 	log.Printf("Registered voice command for phrases: %v", normalized)
 }
