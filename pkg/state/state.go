@@ -16,6 +16,7 @@ import (
 
 var currentState *AppState
 
+
 type AppEvent struct {
 	Type    string
 	Payload any

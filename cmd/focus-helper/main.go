@@ -212,43 +212,88 @@ func setupCustomVariables(appState *state.AppState) {
 		return now.Format(appState.Language.Get("time_format"))
 	})
 }
+
 func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 
-	wakeWord := listener.AppConfig().ActivationWord
-	if wakeWord != "" {
-		listener.RegisterWakeUpWord(func(text string) {
-			wakeAction := models.ActionConfig{
-				Type: models.ActionSpeak,
-				Text: appState.Language.Get("command_ready"),
-			}
-			actions.Execute(wakeAction)
-		}, strings.Split(appState.Language.Get("command_wakeup_words"), ","))
-	}
+	// Wake-up command
+	listener.RegisterWakeUpWord(func(ctx *voice.CommandContext) {
+		listener.WakeUp()
+		wakeAction := models.ActionConfig{
+			Type:      models.ActionSound,
+			SoundFile: "airplane_communication_start.mp3",
+		}
+		actions.Execute(wakeAction)
+	}, strings.Split(appState.Language.Get("command_wakeup_words"), ","))
 
-	listener.RegisterCommand(func(text string) {
+	// Mayday emergency command
+	listener.RegisterWakeUpWord(func(ctx *voice.CommandContext) {
+		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
+
+		// Set hyperfocus state
+		highLevelIdx := len(appState.AppConfig.AlertLevels) - 1
+		alertLevel := appState.AppConfig.AlertLevels[highLevelIdx]
+		appState.Hyperfocus = &models.HyperfocusState{
+			Level:     alertLevel.Level,
+			StartTime: time.Now(),
+		}
 		startActions := []models.ActionConfig{
 			{
-				Type: models.ActionStop,
+				Type:      models.ActionSound,
+				SoundFile: "airplane_communication_start.mp3",
 			},
+			{
+				Type: models.ActionSpeak,
+				Text: appState.Language.Get("mayday_alert"),
+			},
+			{
+				Type:   models.ActionSpeakIA,
+				Prompt: appState.Language.Get("command_mayday"),
+			},
+		}
+		actions.ExecuteSequence(startActions)
+		actions.Execute(models.ActionConfig{
+			Type: models.ActionSpeak,
+			Text: "Declare o estado de mayday com sim ou não",
+		})
+		select {
+		case response := <-ctx.Response:
+			if strings.Contains(response, "sim") {
+				log.Println("User confirmed Mayday alert.")
+				actions.Execute(models.ActionConfig{
+					Type: models.ActionSpeak,
+					Text: "Mayday confirmed. Emergency protocol continues.",
+				})
+				database.LogMaydayEvent(appState.DB)
+			} else {
+				log.Println("User canceled Mayday alert.")
+				actions.Execute(models.ActionConfig{
+					Type: models.ActionSpeak,
+					Text: "Que bom que está tudo bem.",
+				})
+			}
+		case <-time.After(15 * time.Second):
+			log.Println("Timeout excedido.")
+			actions.Execute(models.ActionConfig{
+				Type: models.ActionSpeak,
+				Text: "Alerta de mayday cancelado",
+			})
+		}
+	}, strings.Split(appState.Language.Get("command_mayday_words"), ","))
+
+	// Stop command
+	listener.RegisterCommand(func(ctx *voice.CommandContext) {
+		startActions := []models.ActionConfig{
+			{Type: models.ActionStop},
 			{
 				Type:      models.ActionSound,
 				SoundFile: "airplane_communication_start.mp3",
 			},
 		}
-		go actions.ExecuteSequence(startActions)
-	}, strings.Split(listener.AppConfig().StopWord, ","))
+		actions.ExecuteSequence(startActions)
+	}, strings.Split(appState.Language.Get("command_stop_words"), ","))
 
-	listener.RegisterWakeUpWord(func(text string) {
-		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
-		protocolMayday := models.ActionConfig{
-			Type:   models.ActionSpeakIA,
-			Prompt: appState.Language.Get("command_mayday"),
-		}
-		database.LogMaydayEvent(appState.DB)
-		actions.Execute(protocolMayday)
-	}, strings.Split(appState.Language.Get("command_mayday_words"), ","))
-
-	listener.RegisterCommand(func(text string) {
+	// Time request command
+	listener.RegisterCommand(func(ctx *voice.CommandContext) {
 		log.Println("Time request command detected.")
 		timeAction := models.ActionConfig{
 			Type: models.ActionSpeak,
@@ -257,7 +302,8 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 		actions.Execute(timeAction)
 	}, strings.Split(appState.Language.Get("command_time_words"), ","))
 
-	listener.RegisterCommand(func(text string) {
+	// Focus check command
+	listener.RegisterCommand(func(ctx *voice.CommandContext) {
 		log.Println("Focus check command detected.")
 		focusAction := models.ActionConfig{
 			Type: models.ActionSpeak,

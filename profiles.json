@@ -21,8 +21,6 @@
         "database_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.db",
         "log_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.log",
         "listener_enabled": true,
-        "stop_word": "parar",
-        "activation_word": "comando",
         "vad_threshold": 0.02,
         "vad_silence_timeout": "1500ms",
         "whisper_model_path": "/home/robertocpaes/Projects/focus-helper/whisper.cpp/models/ggml-base.bin",
@@ -35,6 +33,7 @@
             "Photoshop": "Design",
             "Terminal": "Sistema/DevOps",
             "Docker": "Sistema/DevOps",
+            "Termius": "Sistema/DevOps",
             "Notepad": "Anotação",
             "iTerm": "Sistema/DevOps",
             "Google Chrome": "Navegação/Pesquisa",
@@ -44,7 +43,7 @@
             {
                 "enabled": true,
                 "level": "low",
-                "threshold": "45m",
+                "threshold": "1h",
                 "actions": [
                     {
                         "type": "YOUTUBE_AUDIO",
@@ -53,32 +52,31 @@
                         "end_at": "0:03"
                     },
                     {
-                        "type": "SPEAK_IA",
-                        "llama_prompt": "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."
+                        "type": "SPEAK_VOICE",
+                        "text": "Piloto-Alfa-Um, aqui é a Torre. Apenas um lembrete para verificar seus sistemas e fazer uma pequena pausa, se necessário."
                     }
                 ]
             },
             {
                 "enabled": true,
                 "level": "medium",
-                "threshold": "90m",
-                "tolerance": 1.5,
+                "threshold": "1h30m",
                 "actions": [
                     {
                         "type": "YOUTUBE_AUDIO",
-                        "url": "https://www.youtube.com/watch?v=dbAFUdqCIuU",
-                        "start_at": "0:03",
-                        "end_at": "0:04"
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:04",
+                        "end_at": "0:05"
                     },
                     {
                         "type": "YOUTUBE_AUDIO",
-                        "url": "https://www.youtube.com/watch?v=dbAFUdqCIuU",
-                        "start_at": "0:03",
-                        "end_at": "0:04"
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:04",
+                        "end_at": "0:05"
                     },
                     {
-                        "type": "SPEAK_IA",
-                        "llama_prompt": "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."
+                        "type": "SPEAK_VOICE",
+                        "text": "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."
                     }
                 ]
             },
@@ -91,12 +89,8 @@
                     {
                         "type": "YOUTUBE_AUDIO",
                         "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
-                        "start_at": "0:19",
-                        "end_at": "0:21"
-                    },
-                    {
-                        "type": "SOUND",
-                        "sound_file": "alert_level_3.mp3"
+                        "start_at": "0:04",
+                        "end_at": "0:05"
                     },
                     {
                         "type": "POPUP",
@@ -105,7 +99,13 @@
                     },
                     {
                         "type": "SPEAK_VOICE",
-                        "llama_prompt": "Piloto-Alfa-Um, detectamos sinais de hiperfoco. É crucial fazer uma pausa para manter a performance e o bem-estar."
+                        "text": "Piloto-Alfa-Um, detectamos sinais de hiperfoco alto. É crucial fazer uma pausa para manter a performance e o bem-estar."
+                    },
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:04",
+                        "end_at": "0:05"
                     }
                 ]
             },
@@ -117,7 +117,29 @@
                 "actions": [
                     {
                         "type": "SPEAK_VOICE",
-                        "llama_prompt": "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."
+                        "text": "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."
+                    },
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:04",
+                        "end_at": "0:05"
+                    },
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:04",
+                        "end_at": "0:05"
+                    },
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
+                        "start_at": "0:04",
+                        "end_at": "0:05"
+                    },
+                    {
+                        "type": "SPEAK_VOICE",
+                        "text": "Repetindo, faça uma pausa obrigatória imediatamente."
                     }
                 ]
             }
@@ -139,7 +161,7 @@
         "min_random_question": "45m",
         "max_random_question": "90m",
         "reduce_os_sounds": true,
-        "wellbeing_questions_enabled": false,
+        "wellbeing_questions_enabled": true,
         "hyperfocus_associations": {
             "PHPStorm": "Programação",
             "Visual Studio Code": "Programação",

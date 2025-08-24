@@ -15,7 +15,7 @@ func PlaySound(filePath string, volume float64) error {
 	}
 	currentAudio.stopChan = stopChan
 	currentAudio.mu.Unlock()
-	err := playFile(filePath, volume, stopChan)
+	err := playFile(filePath, volume, stopChan, false)
 	currentAudio.mu.Lock()
 	currentAudio.stopChan = nil
 	currentAudio.mu.Unlock()

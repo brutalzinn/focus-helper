@@ -4,7 +4,7 @@ package voice
 import (
 	"context"
 	"fmt"
-	"focus-helper/pkg/models"
+	"focus-helper/pkg/actions"
 	"focus-helper/pkg/state"
 	"log"
 	"strings"
@@ -13,6 +13,14 @@ import (
 
 	"github.com/gordonklaus/portaudio"
 )
+
+const (
+	StateIdle       = "idle"
+	StateAwake      = "awake"
+	StateProcessing = "processing"
+)
+
+var wakeTimeout = 15 * time.Second
 
 // --- Constants for Audio Processing ---
 const (
@@ -37,12 +45,15 @@ const (
 	transcriptionWorkers = 1 // Number of parallel transcription workers.
 )
 
-var wakeTimeout = 15 * time.Second
-
 type Command struct {
 	Phrases      []string
-	Callback     func(transcribedText string)
+	Callback     func(ctx *CommandContext)
 	IsActivation bool
+}
+
+type CommandContext struct {
+	Text     string
+	Response chan string
 }
 
 type audioRingBuffer struct {
@@ -52,20 +63,23 @@ type audioRingBuffer struct {
 }
 
 type Listener struct {
-	stream          *portaudio.Stream
-	transcriber     *Transcriber
-	appState        *state.AppState
-	commands        []Command
-	inBuffer        []int16
-	frameBuffer     []float32
-	mainAudioBuffer []float32
-	preRollBuffer   *audioRingBuffer
-	stopCh          chan struct{}
-	wg              sync.WaitGroup
-	transcriptionCh chan []float32
-	closeOnce       sync.Once
-	state           string
-	stateMu         sync.Mutex
+	pendingResponses map[*Command]chan string
+	pendingMu        sync.Mutex
+	wakeTimer        *time.Timer
+	stream           *portaudio.Stream
+	transcriber      *Transcriber
+	appState         *state.AppState
+	commands         []Command
+	inBuffer         []int16
+	frameBuffer      []float32
+	mainAudioBuffer  []float32
+	preRollBuffer    *audioRingBuffer
+	stopCh           chan struct{}
+	wg               sync.WaitGroup
+	transcriptionCh  chan []float32
+	closeOnce        sync.Once
+	state            string
+	stateMu          sync.Mutex
 }
 
 // DISCLAIMER: SOMETHING CAN THORW SEGMENTION FAULT. wtf many GOROUTINES FOR EVERYTHING.
@@ -149,17 +163,18 @@ func NewListener(appState *state.AppState) (*Listener, error) {
 		return nil, err
 	}
 	listener := &Listener{
-		state:           "idle",
-		stream:          stream,
-		appState:        appState,
-		transcriber:     transcriber,
-		commands:        make([]Command, 0),
-		inBuffer:        in,
-		frameBuffer:     make([]float32, frameSamples),
-		mainAudioBuffer: make([]float32, maxSegmentSamples),
-		preRollBuffer:   newAudioRingBuffer(preRollFramesMax, frameSamples),
-		stopCh:          make(chan struct{}),
-		transcriptionCh: make(chan []float32, transcriptionWorkers),
+		pendingResponses: make(map[*Command]chan string),
+		state:            StateIdle,
+		stream:           stream,
+		appState:         appState,
+		transcriber:      transcriber,
+		commands:         make([]Command, 0),
+		inBuffer:         in,
+		frameBuffer:      make([]float32, frameSamples),
+		mainAudioBuffer:  make([]float32, maxSegmentSamples),
+		preRollBuffer:    newAudioRingBuffer(preRollFramesMax, frameSamples),
+		stopCh:           make(chan struct{}),
+		transcriptionCh:  make(chan []float32, transcriptionWorkers),
 	}
 
 	return listener, nil
@@ -264,40 +279,80 @@ func (l *Listener) transcriptionWorker(ctx context.Context) {
 func (l *Listener) processCommands(text string) {
 	log.Printf("Transcribed speech: '%s'", text)
 	normText := normalizeText(text)
-	log.Printf("Normalized speech: '%s'", normText)
-	for _, command := range l.commands {
-		var matchedPhrase string
-		for _, phrase := range command.Phrases {
+	currentState := l.GetState()
+
+	if currentState == StateProcessing {
+		log.Printf("Ignoring speech, currently processing a command.")
+		return
+	}
+
+	// Check if any command is waiting for a response
+	l.pendingMu.Lock()
+	for cmd, respCh := range l.pendingResponses {
+		select {
+		case respCh <- text:
+			log.Printf("Delivered speech to pending command: %v", cmd.Phrases)
+		default:
+			log.Printf("Pending command response channel full: %v", cmd.Phrases)
+		}
+		l.pendingMu.Unlock()
+		return
+	}
+	l.pendingMu.Unlock()
+
+	// Match a new command
+	var matchedCommand *Command
+	found := false
+	for i := range l.commands {
+		for _, phrase := range l.commands[i].Phrases {
 			if strings.Contains(normText, phrase) {
-				matchedPhrase = phrase
+				matchedCommand = &l.commands[i]
+				log.Printf("Potential match found for phrase: '%s'", phrase)
+				found = true
 				break
 			}
 		}
-		if matchedPhrase == "" {
-			continue
+		if found {
+			break
 		}
-		if command.IsActivation {
-			log.Printf("Activation phrase matched: '%s'. Executing callback.", matchedPhrase)
-			go command.Callback(text)
-			return
-		}
-		currentState := l.GetState()
-		if currentState == "listening" {
-			if l.GetState() == "action_running" {
-				log.Printf("Action in progress, ignoring command: '%s'", matchedPhrase)
-				return
-			}
-			log.Printf("Command matched: '%s'. Executing callback.", matchedPhrase)
-			l.SetState("action_running")
-			go func() {
-				defer l.SetState("listening")
-				command.Callback(text)
-			}()
-			return
-		}
-		log.Printf("Command phrase '%s' detected but ignored (current state: %s).", matchedPhrase, currentState)
+	}
+
+	if matchedCommand == nil {
 		return
 	}
+
+	switch currentState {
+	case StateIdle:
+		if matchedCommand.IsActivation {
+			log.Printf("Activation word matched in Idle state: '%s'", matchedCommand.Phrases[0])
+			go l.startCommandWithResponse(matchedCommand, text)
+		} else {
+			log.Printf("Regular command '%s' ignored in Idle state.", matchedCommand.Phrases[0])
+		}
+
+	case StateAwake:
+		log.Printf("Command matched in Awake state: '%s'", matchedCommand.Phrases[0])
+		l.SetState(StateProcessing)
+		if l.wakeTimer != nil {
+			l.wakeTimer.Stop()
+		}
+		go l.startCommandWithResponse(matchedCommand, text)
+	}
+}
+
+func (l *Listener) startCommandWithResponse(cmd *Command, input string) {
+	defer l.SetState(StateIdle)
+	ctx := &CommandContext{
+		Text:     input,
+		Response: make(chan string, 1),
+	}
+	l.pendingMu.Lock()
+	l.pendingResponses[cmd] = ctx.Response
+	l.pendingMu.Unlock()
+	cmd.Callback(ctx)
+	l.pendingMu.Lock()
+	delete(l.pendingResponses, cmd)
+	l.pendingMu.Unlock()
 }
 
 func (l *Listener) SetState(s string) {
@@ -329,6 +384,15 @@ func (l *Listener) Close() {
 	})
 }
 
-func (l *Listener) AppConfig() *models.Config {
-	return l.appState.AppConfig
+func (l *Listener) WakeUp() {
+	actions.StopCurrentActions()
+	l.SetState(StateAwake)
+	log.Println("Listener is now AWAKE, listening for commands.")
+	if l.wakeTimer != nil {
+		l.wakeTimer.Stop()
+	}
+	l.wakeTimer = time.AfterFunc(wakeTimeout, func() {
+		log.Println("Wake timeout expired, returning to IDLE state.")
+		l.SetState(StateIdle)
+	})
 }

@@ -9,7 +9,9 @@
   "command_time": "São %time%",
   "command_focus": "Seu nível de foco atual é %level%. Você está ativo há %activity_duration%.",
   "command_wakeup_words": "torre, controle, comando, comand, comanda, torre de controle",
-  "command_mayday_words": "mayday, mayday, MAIDAI, maidei, maida, emergencia, emergenci",
-  "command_time_words": "tempo, horas, tempo de atividade",
-  "command_focus_words": "check, checagem, cheque, verificação, analise, checkup, status"
+  "command_mayday_words": "mayday, maidai, madey, maidei, mandei, maida, emergencia, meidei, emergenci",
+  "command_time_words": "tempo, horas, atividade",
+  "command_focus_words": "check, checagem, cheque, verificação, analise, checkup, status",
+  "command_stop_words": "parar, para, cancela, ignora",
+  "mayday_alert": "Atenção. Estamos entrando em modo mayday e a vamos vetorizar você até um pouso seguro. Nível de alerta é %level%"
 }

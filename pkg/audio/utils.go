@@ -59,15 +59,16 @@ func getAudioDuration(filePath string) (time.Duration, error) {
 	}
 	return time.Duration(durationFloat * float64(time.Second)), nil
 }
-func playFile(filename string, volume float64, stopChan chan any) error {
+func playFile(filename string, volume float64, stopChan chan any, adjustSystemVolume bool) error {
 	var cmd *exec.Cmd
 	var lowerVolumeCmd, restoreVolumeCmd *exec.Cmd
 	var originalVolume string
+
 	switch runtime.GOOS {
 	case "linux":
 		sink, err := commands.GetDefaultSinkName()
-		if err != nil {
-			log.Println("Could not get default sink, playing normally")
+		if err != nil || !adjustSystemVolume {
+			log.Println("Could not get default sink or volume adjustment disabled, playing normally")
 			cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
 			break
 		}
@@ -83,7 +84,6 @@ func playFile(filename string, volume float64, stopChan chan any) error {
 			_ = commands.RunCommand(restoreVolumeCmd)
 		}()
 		cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
-
 	case "darwin":
 		cmd = exec.Command("afplay", filename)
 	case "windows":
@@ -91,7 +91,6 @@ func playFile(filename string, volume float64, stopChan chan any) error {
 	default:
 		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
-
 	if err := cmd.Start(); err != nil {
 		return err
 	}

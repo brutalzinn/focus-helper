@@ -56,9 +56,7 @@ func (activityActivity *Activity) ActivityLoop(ctx context.Context, wg *sync.Wai
 	defer activityCheckTicker.Stop()
 	subjectCheckTicker := time.NewTicker(1 * time.Minute)
 	defer subjectCheckTicker.Stop()
-
 	wasActive := !activityActivity.isIdle()
-
 	for {
 		select {
 		case <-activityCheckTicker.C:
@@ -72,7 +70,7 @@ func (activityActivity *Activity) ActivityLoop(ctx context.Context, wg *sync.Wai
 				}
 				wasActive = true
 				usageDuration := time.Since(activityActivity.AppState.ContinuousUsageStartTime)
-				var alertIndex = -1
+				alertIndex := -1
 				log.Printf("IA DETECTOR ENABLED: %v", activityActivity.AppState.AppConfig.IADetectorEnabled)
 				if activityActivity.AppState.AppConfig.IADetectorEnabled && activityActivity.AppState.LLMAdapter != nil {
 					history, _ := database.GetRecentHistorySummary(activityActivity.AppState.DB)
@@ -176,5 +174,5 @@ func (m Activity) resetState() {
 		Type:   models.ActionSpeakIA,
 		Prompt: m.AppState.Language.Get("user_idle_back"),
 	}
-	go actions.Execute(action)
+	actions.Execute(action)
 }
