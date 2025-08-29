@@ -7,7 +7,7 @@
         "username": "Piloto-Alfa-Um",
         "iamodel": {
             "type": "ollama",
-            "model": "llama3.2",
+            "model": "llama3.1",
             "url": "http://localhost:11434/api/generate"
         },
         "idle_timeout": "3m",
@@ -18,12 +18,12 @@
         "wellbeing_questions_enabled": false,
         "ia_detector_enabled": true,
         "hyperfocus_min_duration": "30m",
-        "database_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.db",
-        "log_file": "/home/robertocpaes/Projects/focus-helper/focus_helper.log",
+        "database_file": "/home/robertocpaes/Projects/Pessoal/focus-helper/focus_helper.db",
+        "log_file": "/home/robertocpaes/Projects/Pessoal/focus-helper/focus_helper.log",
         "listener_enabled": true,
         "vad_threshold": 0.02,
         "vad_silence_timeout": "1500ms",
-        "whisper_model_path": "/home/robertocpaes/Projects/focus-helper/whisper.cpp/models/ggml-base.bin",
+        "whisper_model_path": "/home/robertocpaes/Projects/Pessoal/focus-helper/whisper.cpp/models/ggml-base.bin",
         "hyperfocus_associations": {
             "PHPStorm": "Programação",
             "Visual Studio Code": "Programação",

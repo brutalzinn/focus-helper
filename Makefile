@@ -1,65 +1,50 @@
-APP_NAME := focushelper
-BIN_DIR := $(HOME)/.config/$(APP_NAME)
-CONFIG_DIR := $(HOME)/.config/$(APP_NAME)
-LANGS_DIR := langs
-ASSETS_DIR := assets
-VOICES_DIR := voices
-WHISPER_DIR := whisper.cpp
+.PHONY: setup submodules build-whisper build build-debug run clean help
 
-PROFILES_JSON := profiles.json
+BINARY_NAME=focus-helper
+DEBUG_BINARY_NAME=focus-helper-debug
+WHISPER_DIR := $(abspath ./whisper.cpp)
+CGO_CFLAGS := "-I$(WHISPER_DIR)/include -I$(WHISPER_DIR)/ggml/include"
+CGO_LDFLAGS := "-L$(WHISPER_DIR)/build/src -L$(WHISPER_DIR)/build/ggml/src -lwhisper -lggml"
+GOCMD=go
 
-DEST_WHISPER_DIR := $(CONFIG_DIR)/whisper.cpp
-DEST_LANGS_DIR := $(CONFIG_DIR)/langs
-DEST_ASSETS_DIR := $(CONFIG_DIR)/assets
-DEST_PROFILES_JSON := $(CONFIG_DIR)/profiles.json
-DEST_VOICES_DIR := $(CONFIG_DIR)/voices
+.DEFAULT_GOAL := help
 
-GO := go
-GO_BUILD := $(GO) build
-GO_INSTALL := $(GO) install
-BIN_PATH := $(BIN_DIR)/$(APP_NAME)
+setup: submodules build-whisper
+	@echo "✅ Setup ready! Now can compile"
 
-install: build copy-langs copy-assets copy-profiles copy-voices move-binary
+build: build-whisper
+	@echo "Building...: $(BINARY_NAME)... ---"
+	CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) $(GOCMD) build -ldflags="-w -s" -o $(BINARY_NAME) main.go
+	@echo "✅ Bin '$(BINARY_NAME)' ready"
 
-build:
-	@echo "Building the Go binary..."
-	$(GO_BUILD) -o $(APP_NAME) cmd/focus-helper/main.go
+build-debug: build-whisper
+	@echo "Building debug...: $(DEBUG_BINARY_NAME)... ---"
+	CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) $(GOCMD) build -gcflags="all=-N -l" -o $(DEBUG_BINARY_NAME) main.go
+	@echo "✅ Bin '$(DEBUG_BINARY_NAME)' ready"
 
-copy-langs:
-	@echo "Copying langs directory..."
-	@mkdir -p $(DEST_LANGS_DIR)
-	@cp -r $(LANGS_DIR)/. $(DEST_LANGS_DIR)
-
-copy-voices:
-	@echo "Copying voices directory..."
-	@mkdir -p $(DEST_VOICES_DIR)
-	@cp -r $(VOICES_DIR)/. $(DEST_VOICES_DIR)
-
-copy-assets:
-	@echo "Copying assets directory..."
-	@mkdir -p $(DEST_ASSETS_DIR)
-	@cp -r $(ASSETS_DIR)/. $(DEST_ASSETS_DIR)
-
-copy-profiles:
-	@echo "Copying profiles.json..."
-	@cp $(PROFILES_JSON) $(DEST_PROFILES_JSON)
-
-
-move-binary:
-	@echo "Moving the binary to /usr/local/bin..."
-	@sudo mv $(APP_NAME) /usr/local/bin/$(APP_NAME)
-	@sudo chmod +x /usr/local/bin/$(APP_NAME)
+run: build-whisper
+	@echo "--- running in development mode... ---"
+	CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) $(GOCMD) run main.go -debug
 
 clean:
-	@echo "Cleaning up..."
-	@rm -rf $(CONFIG_DIR) $(APP_NAME)
+	@echo "clear cache"
+	rm -f $(BINARY_NAME) $(DEBUG_BINARY_NAME)
+	rm -rf ./whisper.cpp/build
+	@echo "✅ clear done."
+
+submodules:
+	@echo "updating git submodules"
+	git submodule update --init --recursive
+
+build-whisper:
+	@echo "Compilling whisper and C++ dependencies"
+	cmake ./whisper.cpp -B ./whisper.cpp/build -DBUILD_SHARED_LIBS=OFF
+	cmake --build ./whisper.cpp/build --config Release -j$(nproc)
 
 help:
-	@echo "Available targets:"
-	@echo "  install       - Build and install the binary and copy the config files"
-	@echo "  clean         - Clean up the build files and config directories"
-	@echo "  build         - Build the Go binary"
-	@echo "  copy-langs    - Copy the langs directory to the config directory"
-	@echo "  copy-assets   - Copy the assets directory to the config directory"
-	@echo "  copy-profiles - Copy the profiles.json to the config directory"
-	@echo "  move-binary   - Move the binary to a globally available directory"
+	@echo "Available commands:"
+	@echo "  make setup          - Set up the project for the first time (initializes submodules and builds C++)."
+	@echo "  make build          - Compile the production binary."
+	@echo "  make run            - Compile and execute the program."
+	@echo "  make build-debug    - Create a debug binary for use with VS Code."
+	@echo "  make clean          - Remove all compiled files and artifacts."

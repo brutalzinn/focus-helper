@@ -1,9 +1,9 @@
-// cmd/focus-helper/main.go
 package main
 
 import (
 	"context"
 	"errors"
+
 	"flag"
 	"fmt"
 	"focus-helper/pkg/actions"
