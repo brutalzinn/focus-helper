@@ -1,7 +1,22 @@
 .PHONY: setup submodules build-whisper build build-debug run clean help
 
-BINARY_NAME=focus-helper
-DEBUG_BINARY_NAME=focus-helper-debug
+BINARY_NAME=focushelper
+DEBUG_BINARY_NAME=focushelper-debug
+
+PROFILES_JSON := ./profiles.json
+
+CONFIG_DIR := $(HOME)/.config/$(BINARY_NAME)
+
+LANGS_DIR := langs
+ASSETS_DIR := assets
+VOICES_DIR := voices
+
+DEST_LANGS_DIR := $(CONFIG_DIR)/langs
+DEST_ASSETS_DIR := $(CONFIG_DIR)/assets
+DEST_PROFILES_JSON := $(CONFIG_DIR)/profiles.json
+DEST_VOICES_DIR := $(CONFIG_DIR)/voices
+
+
 WHISPER_DIR := $(abspath ./whisper.cpp)
 CGO_CFLAGS := "-I$(WHISPER_DIR)/include -I$(WHISPER_DIR)/ggml/include"
 CGO_LDFLAGS := "-L$(WHISPER_DIR)/build/src -L$(WHISPER_DIR)/build/ggml/src -lwhisper -lggml"
@@ -41,6 +56,32 @@ build-whisper:
 	cmake ./whisper.cpp -B ./whisper.cpp/build -DBUILD_SHARED_LIBS=OFF
 	cmake --build ./whisper.cpp/build --config Release -j$(nproc)
 
+move-binary:
+	@echo "Moving the binary to /usr/local/bin..."
+	@sudo cp $(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
+	@sudo chmod +x /usr/local/bin/$(BINARY_NAME)
+
+copy-langs:
+	@echo "copying $(LANGS_DIR) to: $(DEST_LANGS_DIR)" 
+	@mkdir -p $(DEST_LANGS_DIR)
+	@cp -r $(LANGS_DIR)/. $(DEST_LANGS_DIR)
+
+copy-voices:
+	@mkdir -p $(DEST_VOICES_DIR)
+	@echo "copying $(VOICES_DIR) to: $(DEST_VOICES_DIR)" 
+	@cp -r $(VOICES_DIR)/. $(DEST_VOICES_DIR)
+
+copy-assets:
+	@mkdir -p $(DEST_ASSETS_DIR)
+	@echo "copying $(ASSETS_DIR) to: $(DEST_ASSETS_DIR)" 
+	@cp -r $(ASSETS_DIR)/. $(DEST_ASSETS_DIR)
+
+copy-profiles:
+	@echo "copying profiles.json to: $(DEST_PROFILES_JSON)" 
+	@cp $(PROFILES_JSON) $(DEST_PROFILES_JSON)
+
+move: copy-langs copy-voices copy-assets copy-profiles move-binary
+
 help:
 	@echo "Available commands:"
 	@echo "  make setup          - Set up the project for the first time (initializes submodules and builds C++)."
@@ -48,3 +89,4 @@ help:
 	@echo "  make run            - Compile and execute the program."
 	@echo "  make build-debug    - Create a debug binary for use with VS Code."
 	@echo "  make clean          - Remove all compiled files and artifacts."
+	@echo "  make move         	 - Move all artifacts to your .config folder and set focushelper global by cmd tools"

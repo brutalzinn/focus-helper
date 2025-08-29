@@ -23,7 +23,7 @@
         "listener_enabled": true,
         "vad_threshold": 0.02,
         "vad_silence_timeout": "1500ms",
-        "whisper_model_path": "/home/robertocpaes/Projects/Pessoal/focus-helper/whisper.cpp/models/ggml-base.bin",
+        "whisper_model_path": "/home/robertocpaes/Projects/Pessoal/focus-helper/whisper.cpp/models/ggml-medium.bin",
         "hyperfocus_associations": {
             "PHPStorm": "Programação",
             "Visual Studio Code": "Programação",
