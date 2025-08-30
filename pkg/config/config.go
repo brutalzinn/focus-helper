@@ -117,6 +117,13 @@ func GetUserConfigPath() string {
 	return userConfigPath
 }
 
+func GetAssetPath(filename string) string {
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return filepath.Join("/app", "assets", filename)
+	}
+	return filepath.Join(GetUserConfigPath(), "assets", filename)
+}
+
 func LoadConfig(profileName string, debug bool) (*models.Config, error) {
 	profilePath := filepath.Join(GetUserConfigPath(), PROFILES_FILE_NAME)
 

@@ -1,6 +1,9 @@
 package audio
 
-import "sync"
+import (
+	"focus-helper/pkg/config"
+	"sync"
+)
 
 var currentAudio struct {
 	mu       sync.Mutex
@@ -15,7 +18,7 @@ func PlaySound(filePath string, volume float64) error {
 	}
 	currentAudio.stopChan = stopChan
 	currentAudio.mu.Unlock()
-	err := playFile(filePath, volume, stopChan, true)
+	err := playFile(filePath, volume, stopChan, config.GetConfig().ReduceOSSounds)
 	currentAudio.mu.Lock()
 	currentAudio.stopChan = nil
 	currentAudio.mu.Unlock()

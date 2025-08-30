@@ -3,11 +3,8 @@ package audio
 import (
 	"fmt"
 	"focus-helper/pkg/commands"
-	"focus-helper/pkg/config"
 	"log"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -123,7 +120,6 @@ func playFile(filename string, volume float64, stopChan chan any, adjustSystemVo
 
 		defer func() {
 			log.Printf("Restoring system volume to: %s", originalVolume)
-			// Use your RunCommand in the defer block
 			_ = commands.RunCommand(exec.Command("osascript", "-e", fmt.Sprintf("set volume output volume %s", originalVolume)))
 		}()
 
@@ -139,9 +135,6 @@ func playFile(filename string, volume float64, stopChan chan any, adjustSystemVo
 		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
 
-	// The main playback command cannot use `RunCommand` because it uses `cmd.Run()`,
-	// which is blocking. We need `cmd.Start()` to manage it in a separate goroutine
-	// and allow the `stopChan` to interrupt it.
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -164,13 +157,6 @@ func playFile(filename string, volume float64, stopChan chan any, adjustSystemVo
 		}
 		return nil
 	}
-}
-
-func GetAssetPath(filename string) string {
-	if _, err := os.Stat("/.dockerenv"); err == nil {
-		return filepath.Join("/app", "assets", filename)
-	}
-	return filepath.Join(config.GetUserConfigPath(), "assets", filename)
 }
 
 func runCommandWithOutput(cmd *exec.Cmd) (string, error) {

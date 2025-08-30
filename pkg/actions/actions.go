@@ -62,7 +62,7 @@ func Execute(action models.ActionConfig) error {
 func executeSound(ctx context.Context, action models.ActionConfig) error {
 	done := make(chan error)
 	go func() {
-		done <- audio.PlaySound(audio.GetAssetPath(action.SoundFile), 1.0)
+		done <- audio.PlaySound(config.GetAssetPath(action.SoundFile), 1.0)
 	}()
 	select {
 	case <-ctx.Done():

@@ -161,19 +161,18 @@ func startServices(ctx context.Context, wg *sync.WaitGroup, c *appComponents) {
 	}
 	// if listenerReady {
 
-	// startActions := []models.ActionConfig{
-	// 	{
-	// 		Type:      models.ActionSound,
-	// 		SoundFile: "airplane_communication_start.mp3",
-	// 	},
-	// 	{
-	// 		Type: models.ActionSpeak,
-	// 		Text: c.appState.Language.Get("hello_prompt"),
-	// 	},
-	// }
-	// wg.Add(1)
-	// go actions.ExecuteSequence(startActions)
-	// }
+	startActions := []models.ActionConfig{
+		{
+			Type:      models.ActionSound,
+			SoundFile: "airplane_communication_start.mp3",
+		},
+		{
+			Type: models.ActionSpeak,
+			Text: c.appState.Language.Get("hello_prompt"),
+		},
+	}
+	wg.Add(1)
+	go actions.ExecuteSequence(startActions)
 }
 
 func setupCustomVariables(appState *state.AppState) {
