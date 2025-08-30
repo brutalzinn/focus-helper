@@ -16,7 +16,6 @@ import (
 
 var currentState *AppState
 
-
 type AppEvent struct {
 	Type    string
 	Payload any
@@ -38,6 +37,8 @@ type AppState struct {
 	EventChannel             chan AppEvent
 	LastActivityTime         time.Time
 	ContinuousUsageStartTime time.Time
+	IsAnalyzing              bool
+	AnalyzeMu                sync.Mutex
 }
 
 type AppStateDependencies struct {

@@ -30,3 +30,12 @@ func flatten(frames [][]float32) []float32 {
 	}
 	return out
 }
+
+func pushAudioSegment(queue chan []float32, segment []float32) {
+	select {
+	case queue <- segment:
+	default:
+		<-queue
+		queue <- segment
+	}
+}

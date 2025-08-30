@@ -73,23 +73,37 @@ func (activityActivity *Activity) ActivityLoop(ctx context.Context, wg *sync.Wai
 				alertIndex := -1
 				log.Printf("IA DETECTOR ENABLED: %v", activityActivity.AppState.AppConfig.IADetectorEnabled)
 				if activityActivity.AppState.AppConfig.IADetectorEnabled && activityActivity.AppState.LLMAdapter != nil {
-					history, _ := database.GetRecentHistorySummary(activityActivity.AppState.DB)
-					currentWindow := DetectSubject(activityActivity.AppState.AppConfig.HyperfocusAssociations)
-					index, err := llm.AnalyzeHyperfocus(
-						activityActivity.AppState.LLMAdapter,
-						activityActivity.AppState.Language.Get("detector_prompt"),
-						len(activityActivity.AppState.AppConfig.AlertLevels),
-						history,
-						currentWindow,
-						usageDuration,
-					)
-					if err != nil {
-						log.Printf("AI detector failed: %v. Using progressive time-based fallback.", err)
-						alertIndex = activityActivity.progressiveTimeCheck(usageDuration)
-					} else {
-						log.Printf("AI Analyst determined alert index: %d", index)
-						alertIndex = index
+					activityActivity.AppState.AnalyzeMu.Lock()
+					if activityActivity.AppState.IsAnalyzing {
+						activityActivity.AppState.AnalyzeMu.Unlock()
+						return
 					}
+					activityActivity.AppState.IsAnalyzing = true
+					activityActivity.AppState.AnalyzeMu.Unlock()
+					go func() {
+						defer func() {
+							activityActivity.AppState.AnalyzeMu.Lock()
+							activityActivity.AppState.IsAnalyzing = false
+							activityActivity.AppState.AnalyzeMu.Unlock()
+						}()
+						history, _ := database.GetRecentHistorySummary(activityActivity.AppState.DB)
+						currentWindow := DetectSubject(activityActivity.AppState.AppConfig.HyperfocusAssociations)
+						index, err := llm.AnalyzeHyperfocus(
+							activityActivity.AppState.LLMAdapter,
+							activityActivity.AppState.Language.Get("detector_prompt"),
+							len(activityActivity.AppState.AppConfig.AlertLevels),
+							history,
+							currentWindow,
+							usageDuration,
+						)
+						if err != nil {
+							log.Printf("AI detector failed: %v. Using progressive time-based fallback.", err)
+							alertIndex = activityActivity.progressiveTimeCheck(usageDuration)
+						} else {
+							log.Printf("AI Analyst determined alert index: %d", index)
+							alertIndex = index
+						}
+					}()
 				} else {
 					alertIndex = activityActivity.progressiveTimeCheck(usageDuration)
 				}

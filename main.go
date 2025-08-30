@@ -129,22 +129,25 @@ func initComponents(ctx context.Context, wg *sync.WaitGroup, appConfig *models.C
 }
 
 func startServices(ctx context.Context, wg *sync.WaitGroup, c *appComponents) {
+	defer wg.Done()
 	wg.Add(1)
 	go server.StartServer(ctx, wg)
+
 	wg.Add(1)
 	go c.activityMonitor.ActivityLoop(ctx, wg)
+
 	if c.appState.AppConfig.WellbeingQuestionsEnabled {
 		wg.Add(1)
 		go sheduler.SchedulerLoop(ctx, wg, c.appState)
 	} else {
 		log.Println("Wellbeing questions disabled.")
 	}
-
 	if c.appState.AppConfig.ListenerEnabled {
 		err := portaudio.Initialize()
 		if err != nil {
 			log.Printf("Cant initliaze portaudio")
 		}
+		defer portaudio.Terminate()
 		listener, err := voice.NewListener(c.appState)
 		if err != nil {
 			log.Fatalf("Failed to initialize voice listener: %v", err)
@@ -152,21 +155,25 @@ func startServices(ctx context.Context, wg *sync.WaitGroup, c *appComponents) {
 		registerVoiceCommands(listener, c.appState)
 		wg.Add(1)
 		go listener.ListenContinuously(ctx, wg)
+		log.Println("Voice listener is ready.")
 	} else {
 		log.Println("Voice command listener is disabled in the config.")
 	}
+	// if listenerReady {
 
-	startActions := []models.ActionConfig{
-		{
-			Type:      models.ActionSound,
-			SoundFile: "airplane_communication_start.mp3",
-		},
-		{
-			Type: models.ActionSpeak,
-			Text: c.appState.Language.Get("hello_prompt"),
-		},
-	}
-	go actions.ExecuteSequence(startActions)
+	// startActions := []models.ActionConfig{
+	// 	{
+	// 		Type:      models.ActionSound,
+	// 		SoundFile: "airplane_communication_start.mp3",
+	// 	},
+	// 	{
+	// 		Type: models.ActionSpeak,
+	// 		Text: c.appState.Language.Get("hello_prompt"),
+	// 	},
+	// }
+	// wg.Add(1)
+	// go actions.ExecuteSequence(startActions)
+	// }
 }
 
 func setupCustomVariables(appState *state.AppState) {
@@ -223,53 +230,42 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 			SoundFile: "airplane_communication_start.mp3",
 		}
 		actions.Execute(wakeAction)
+		log.Println("App is now awake and ready to receive commands.")
 	}, strings.Split(appState.Language.Get("command_wakeup_words"), ","))
 
 	// Mayday emergency command
 	listener.RegisterWakeUpWord(func(ctx *voice.CommandContext) {
 		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
-
-		// Set hyperfocus state
-		highLevelIdx := len(appState.AppConfig.AlertLevels) - 1
-		alertLevel := appState.AppConfig.AlertLevels[highLevelIdx]
-		appState.Hyperfocus = &models.HyperfocusState{
-			Level:     alertLevel.Level,
-			StartTime: time.Now(),
-		}
-		startActions := []models.ActionConfig{
-			{
-				Type:      models.ActionSound,
-				SoundFile: "airplane_communication_start.mp3",
-			},
-			{
-				Type: models.ActionSpeak,
-				Text: "Declare o estado de mayday com sim ou não",
-			},
-		}
-		actions.ExecuteSequence(startActions)
-		select {
-		case response := <-ctx.Response:
-			if strings.Contains(response, "sim") {
-				log.Println("User confirmed Mayday alert.")
+		go func() {
+			select {
+			case response := <-ctx.Response:
+				if strings.Contains(response, "sim") {
+					log.Println("User confirmed Mayday alert.")
+					actions.Execute(models.ActionConfig{
+						Type: models.ActionSpeak,
+						Text: "Protocolo de emergência ativo.",
+					})
+					database.LogMaydayEvent(appState.DB)
+				} else {
+					log.Println("User canceled Mayday alert.")
+					actions.Execute(models.ActionConfig{
+						Type: models.ActionSpeak,
+						Text: "Que bom que está tudo bem.",
+					})
+				}
+			case <-time.After(60 * time.Second):
+				log.Println("Timeout excedido.")
 				actions.Execute(models.ActionConfig{
 					Type: models.ActionSpeak,
-					Text: "Mayday confirmado. Protocolo de emergência ativo.",
-				})
-				database.LogMaydayEvent(appState.DB)
-			} else {
-				log.Println("User canceled Mayday alert.")
-				actions.Execute(models.ActionConfig{
-					Type: models.ActionSpeak,
-					Text: "Que bom que está tudo bem.",
+					Text: "Alerta de mayday cancelado",
 				})
 			}
-		case <-time.After(15 * time.Second):
-			log.Println("Timeout excedido.")
-			actions.Execute(models.ActionConfig{
-				Type: models.ActionSpeak,
-				Text: "Alerta de mayday cancelado",
-			})
+		}()
+		startActions := []models.ActionConfig{
+			{Type: models.ActionSound, SoundFile: "airplane_communication_start.mp3"},
+			{Type: models.ActionSpeak, Text: "Entendi sua solicitação. Vamos vetorizar você até o aeroporto mais próximo. Você deve confirmar com sim ou não."},
 		}
+		actions.ExecuteSequence(startActions)
 	}, strings.Split(appState.Language.Get("command_mayday_words"), ","))
 
 	// Stop command

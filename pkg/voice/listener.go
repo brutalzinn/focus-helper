@@ -21,28 +21,22 @@ const (
 )
 
 var wakeTimeout = 30 * time.Second
+var lastWakeUp time.Time
+var wakeCooldown = 1 * time.Second
 
-// --- Constants for Audio Processing ---
 const (
-	sampleRate   = 16000 // Sample rate expected by Whisper.
-	frameMs      = 30    // Duration of each audio frame in milliseconds.
-	frameSamples = sampleRate * frameMs / 1000
-
-	preRollMs        = 300 // Keep 300ms of audio before speech starts.
-	preRollFramesMax = preRollMs / frameMs
-
-	hangoverMs     = 300 // Wait 300ms after speech ends before processing.
-	hangoverFrames = hangoverMs / frameMs
-
-	vadThreshold    = 0.01 // Voice Activity Detection (VAD) threshold. Tune this for your mic.
-	minSpeechMs     = 120  // Minimum duration of speech to be considered active.
-	minSpeechFrames = minSpeechMs / frameMs
-
-	maxSpeechSeconds  = 15                                  // Max duration of a single speech segment.
-	maxSegmentFrames  = (maxSpeechSeconds * 1000) / frameMs // Max frames in the main buffer.
-	maxSegmentSamples = maxSegmentFrames * frameSamples     // Max samples in the main buffer.
-
-	transcriptionWorkers = 1 // Number of parallel transcription workers.
+	sampleRate        = 16000
+	frameMs           = 30
+	frameSamples      = sampleRate * frameMs / 1000
+	preRollMs         = 300
+	preRollFramesMax  = preRollMs / frameMs
+	hangoverMs        = 300
+	hangoverFrames    = hangoverMs / frameMs
+	vadThreshold      = 0.01
+	minSpeechMs       = 120
+	minSpeechFrames   = minSpeechMs / frameMs
+	maxCommandSeconds = 15
+	maxChunkSamples   = sampleRate * maxCommandSeconds
 )
 
 type Command struct {
@@ -52,18 +46,20 @@ type Command struct {
 }
 
 type CommandContext struct {
-	Text     string
-	Response chan string
+	Text      string
+	Response  chan string
+	RequestID string
 }
 
 type audioRingBuffer struct {
-	buf     []float32
-	headPos int
-	isFull  bool
+	buf       []float32
+	headPos   int
+	isFull    bool
+	frameSize int
 }
 
 type Listener struct {
-	pendingResponses map[*Command]chan string
+	pendingResponses map[string]chan string
 	pendingMu        sync.Mutex
 	wakeTimer        *time.Timer
 	stream           *portaudio.Stream
@@ -71,61 +67,82 @@ type Listener struct {
 	appState         *state.AppState
 	commands         []Command
 	inBuffer         []int16
-	frameBuffer      []float32
 	mainAudioBuffer  []float32
 	preRollBuffer    *audioRingBuffer
 	stopCh           chan struct{}
 	wg               sync.WaitGroup
-	transcriptionCh  chan []float32
 	closeOnce        sync.Once
 	state            string
 	stateMu          sync.Mutex
+	ReadyCh          chan struct{}
+	audioQueue       chan []float32
+	speechStartTime  time.Time
+	lastSegmentTime  time.Time
 }
 
-// DISCLAIMER: SOMETHING CAN THORW SEGMENTION FAULT. wtf many GOROUTINES FOR EVERYTHING.
-///NO ONE UNIT TEST. ARE YOU JOKING ME???? @brutalzinn
-// SOMEPOINTERS IS WRONG BUT WE ARE APPLYING GO HORSE NOW
-
+// newAudioRingBuffer creates a ring for numFrames * samplesPerFrame floats.
 func newAudioRingBuffer(numFrames, samplesPerFrame int) *audioRingBuffer {
 	return &audioRingBuffer{
-		buf: make([]float32, numFrames*samplesPerFrame),
+		buf:       make([]float32, numFrames*samplesPerFrame),
+		frameSize: samplesPerFrame,
 	}
 }
 
+// PushFrame writes frame into ring buffer handling wrap-around.
 func (r *audioRingBuffer) PushFrame(frame []float32) {
-	frameSize := len(frame)
-	copy(r.buf[r.headPos:], frame)
-	r.headPos += frameSize
-	if r.headPos >= len(r.buf) {
-		r.headPos = 0
+	if len(frame) != r.frameSize {
+		// defensive: ignore wrong-size frames
+		return
+	}
+	start := r.headPos
+	end := start + r.frameSize
+	if end <= len(r.buf) {
+		copy(r.buf[start:end], frame)
+		r.headPos = end % len(r.buf)
+	} else {
+		first := len(r.buf) - start
+		copy(r.buf[start:], frame[:first])
+		copy(r.buf[:], frame[first:])
+		r.headPos = (start + r.frameSize) % len(r.buf)
+	}
+	if r.headPos == 0 {
 		r.isFull = true
 	}
 }
 
+// WriteContentsTo writes ring contents (oldest-first) into dst and returns count.
 func (r *audioRingBuffer) WriteContentsTo(dst []float32) int {
 	if !r.isFull {
 		return copy(dst, r.buf[:r.headPos])
 	}
-
-	copied := copy(dst, r.buf[r.headPos:])
-	copied += copy(dst[copied:], r.buf[:r.headPos])
-	return copied
+	// when full, oldest sample begins at headPos
+	n1 := copy(dst, r.buf[r.headPos:])
+	n2 := copy(dst[n1:], r.buf[:r.headPos])
+	return n1 + n2
 }
 
 func NewListener(appState *state.AppState) (*Listener, error) {
 	log.Println("Initializing Voice Listener...")
 
+	// Initialize PortAudio
+	if err := portaudio.Initialize(); err != nil {
+		return nil, fmt.Errorf("portaudio initialize: %w", err)
+	}
+
 	in := make([]int16, frameSamples)
 
+	// List devices and prompt user (keeps your original behavior)
 	devices, err := portaudio.Devices()
 	if err != nil {
+		portaudio.Terminate()
 		return nil, err
 	}
 
 	log.Println("Available input devices:")
 	for i, dev := range devices {
 		if dev.MaxInputChannels > 0 {
-			fmt.Printf("[%d] %s (Input Channels: %d)\n", i, dev.Name, dev.MaxInputChannels)
+			fmt.Printf("[%d] %s (Input Channels: %d, DefaultSampleRate: %.0f)\n",
+				i, dev.Name, dev.MaxInputChannels, dev.DefaultSampleRate)
 		}
 	}
 
@@ -143,64 +160,66 @@ func NewListener(appState *state.AppState) (*Listener, error) {
 	selectedDevice := devices[choice]
 	log.Printf("Selected device: %s\n", selectedDevice.Name)
 
+	// Force 16kHz mono (Whisper requirement)
 	params := portaudio.StreamParameters{
 		Input: portaudio.StreamDeviceParameters{
 			Device:   selectedDevice,
 			Channels: 1,
 		},
 		SampleRate:      sampleRate,
-		FramesPerBuffer: len(in),
+		FramesPerBuffer: frameSamples,
 	}
 	params.Output.Channels = 0
+
 	stream, err := portaudio.OpenStream(params, in)
 	if err != nil {
-		return nil, err
+		portaudio.Terminate()
+		return nil, fmt.Errorf("open stream: %w", err)
 	}
 
 	transcriber, err := NewTranscriber(appState.AppConfig.WhisperModelPath)
 	if err != nil {
 		stream.Close()
-		return nil, err
-	}
-	listener := &Listener{
-		pendingResponses: make(map[*Command]chan string),
-		state:            StateIdle,
-		stream:           stream,
-		appState:         appState,
-		transcriber:      transcriber,
-		commands:         make([]Command, 0),
-		inBuffer:         in,
-		frameBuffer:      make([]float32, frameSamples),
-		mainAudioBuffer:  make([]float32, maxSegmentSamples),
-		preRollBuffer:    newAudioRingBuffer(preRollFramesMax, frameSamples),
-		stopCh:           make(chan struct{}),
-		transcriptionCh:  make(chan []float32, transcriptionWorkers),
+		portaudio.Terminate()
+		return nil, fmt.Errorf("new transcriber: %w", err)
 	}
 
+	listener := &Listener{
+		pendingResponses: make(map[string]chan string),
+		state:            StateIdle,
+		stream:           stream,
+		transcriber:      transcriber,
+		appState:         appState,
+		commands:         []Command{},
+		inBuffer:         in,
+		mainAudioBuffer:  make([]float32, maxChunkSamples),
+		preRollBuffer:    newAudioRingBuffer(preRollFramesMax, frameSamples),
+		stopCh:           make(chan struct{}),
+		ReadyCh:          make(chan struct{}),
+		audioQueue:       make(chan []float32, 2),
+	}
 	return listener, nil
 }
 
 func (l *Listener) ListenContinuously(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 	log.Println("Voice command listener started...")
-	l.wg.Add(transcriptionWorkers)
-	for i := 0; i < transcriptionWorkers; i++ {
-		go func() {
-			defer l.wg.Done()
-			l.transcriptionWorker(ctx)
-		}()
-	}
-	l.wg.Add(1)
-	go func() {
-		defer l.wg.Done()
-		l.audioCaptureLoop(ctx)
-	}()
 
+	l.wg.Add(1)
+	go l.transcriptionWorker(ctx)
+
+	// Start audio capture loop
+	l.wg.Add(1)
+	go l.audioCaptureLoop(ctx)
+
+	// Start stream
 	if err := l.stream.Start(); err != nil {
 		log.Printf("Error starting audio stream: %v", err)
 		l.Close()
+		return
 	}
 
+	close(l.ReadyCh)
 	<-ctx.Done()
 	log.Println("Shutdown signal received, closing voice listener.")
 	l.Close()
@@ -211,45 +230,58 @@ func (l *Listener) audioCaptureLoop(ctx context.Context) {
 	var segmentPos int
 	var speechActive bool
 	var speechFrames, silenceFrames int
+	frameF32 := make([]float32, frameSamples)
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Audio capture loop stopping due to context cancellation.")
 			return
 		case <-l.stopCh:
-			log.Println("Audio capture loop stopped.")
 			return
 		default:
+
 			if err := l.stream.Read(); err != nil {
-				log.Printf("Error reading from audio stream: %v", err)
+				if err == portaudio.InputOverflowed {
+					time.Sleep(5 * time.Millisecond)
+					continue
+				}
 				return
 			}
-			i16ToF32(l.inBuffer, l.frameBuffer)
-			l.preRollBuffer.PushFrame(l.frameBuffer)
-			energy := rmsEnergy(l.frameBuffer)
+
+			i16ToF32(l.inBuffer, frameF32)
+			l.preRollBuffer.PushFrame(frameF32)
+			energy := rmsEnergy(frameF32)
 			isSpeech := energy > vadThreshold
+
 			if isSpeech {
-				speechFrames++
-				silenceFrames = 0
-				if !speechActive && speechFrames >= minSpeechFrames {
+				if !speechActive {
 					speechActive = true
 					segmentPos = l.preRollBuffer.WriteContentsTo(l.mainAudioBuffer)
+					l.speechStartTime = time.Now()
 				}
+				speechFrames++
+				silenceFrames = 0
 			} else {
 				speechFrames = 0
 				if speechActive {
 					silenceFrames++
 				}
 			}
+
 			if speechActive {
 				if segmentPos+frameSamples <= len(l.mainAudioBuffer) {
-					copy(l.mainAudioBuffer[segmentPos:], l.frameBuffer)
+					copy(l.mainAudioBuffer[segmentPos:], frameF32)
 					segmentPos += frameSamples
 				}
+
 				if silenceFrames >= hangoverFrames || segmentPos+frameSamples > len(l.mainAudioBuffer) {
-					segmentCopy := make([]float32, segmentPos)
-					copy(segmentCopy, l.mainAudioBuffer[:segmentPos])
-					l.transcriptionCh <- segmentCopy
+					if segmentPos > 0 {
+						segmentCopy := make([]float32, segmentPos)
+						copy(segmentCopy, l.mainAudioBuffer[:segmentPos])
+						l.lastSegmentTime = time.Now()
+						pushAudioSegment(l.audioQueue, segmentCopy)
+						log.Printf("Captured speech duration: %v", l.lastSegmentTime.Sub(l.speechStartTime))
+					}
 					speechActive = false
 					speechFrames = 0
 					silenceFrames = 0
@@ -259,19 +291,21 @@ func (l *Listener) audioCaptureLoop(ctx context.Context) {
 		}
 	}
 }
-
 func (l *Listener) transcriptionWorker(ctx context.Context) {
 	defer l.wg.Done()
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Transcription worker stopping due to context cancellation.")
 			return
 		case <-l.stopCh:
-			log.Println("Transcription worker stopped.")
 			return
-		case audioData := <-l.transcriptionCh:
-			text, err := l.transcriber.Transcribe(audioData)
+		case segment := <-l.audioQueue:
+			if !l.appState.IsListening {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+			text, err := l.transcriber.Transcribe(segment)
 			if err != nil {
 				log.Printf("Transcription error: %v", err)
 				continue
@@ -280,45 +314,82 @@ func (l *Listener) transcriptionWorker(ctx context.Context) {
 				continue
 			}
 
+			latency := time.Since(l.lastSegmentTime)
+			log.Printf("TRANSCRIBE: %s (latency: %v, segment duration: %v)", text, latency, time.Since(l.speechStartTime))
+
 			l.processCommands(text)
 		}
 	}
 }
+
 func (l *Listener) processCommands(text string) {
 	log.Printf("Transcribed speech: '%s'", text)
 	normText := normalizeText(text)
+	log.Printf("TRANSCRIBE normalize speech: '%s'", normText)
 	currentState := l.GetState()
-
-	if currentState == StateProcessing {
-		log.Printf("Ignoring speech, currently processing a command.")
-		return
+	for _, wakeCmd := range l.commands {
+		if !wakeCmd.IsActivation {
+			continue
+		}
+		for _, phrase := range wakeCmd.Phrases {
+			if strings.Contains(normText, phrase) {
+				if time.Since(lastWakeUp) < wakeCooldown {
+					break // skip duplicate trigger
+				}
+				lastWakeUp = time.Now()
+				log.Printf("Wake-up word matched: '%s'", phrase)
+				// Wake-up words never block commands
+				go wakeCmd.Callback(&CommandContext{
+					Text:     text,
+					Response: make(chan string, 1),
+				})
+				// Set listener awake
+				l.WakeUp()
+				// Do not process normal commands in this loop
+				return
+			}
+		}
 	}
 
+	// --- Deliver to pending responses ---
 	l.pendingMu.Lock()
-	for cmd, respCh := range l.pendingResponses {
+	for id, respCh := range l.pendingResponses {
 		select {
 		case respCh <- normText:
-			log.Printf("Delivered speech to pending command: %v", cmd.Phrases)
+			log.Printf("Delivered speech to pending response id=%s", id)
 		default:
-			log.Printf("Pending command response channel full: %v", cmd.Phrases)
+			log.Printf("Pending response channel full id=%s", id)
 		}
-		l.pendingMu.Unlock()
-		return
 	}
 	l.pendingMu.Unlock()
 
+	// Only process normal commands if listener is awake
+	if currentState != StateAwake {
+		log.Printf("Ignoring commands, listener not awake (state=%s)", currentState)
+		return
+	}
+
+	// Ignore if already processing
+	if currentState == StateProcessing {
+		log.Printf("Ignoring new command detection (state=processing).")
+		return
+	}
+
+	// --- Find normal command match ---
 	var matchedCommand *Command
-	found := false
 	for i := range l.commands {
-		for _, phrase := range l.commands[i].Phrases {
+		cmd := &l.commands[i]
+		if cmd.IsActivation {
+			continue // skip wake-up words
+		}
+		for _, phrase := range cmd.Phrases {
 			if strings.Contains(normText, phrase) {
-				matchedCommand = &l.commands[i]
-				log.Printf("Potential match found for phrase: '%s'", phrase)
-				found = true
+				matchedCommand = cmd
+				log.Printf("Match for phrase: '%s'", phrase)
 				break
 			}
 		}
-		if found {
+		if matchedCommand != nil {
 			break
 		}
 	}
@@ -326,44 +397,37 @@ func (l *Listener) processCommands(text string) {
 	if matchedCommand == nil {
 		return
 	}
-
-	switch currentState {
-	case StateIdle:
-		if matchedCommand.IsActivation {
-			log.Printf("Activation word matched in Idle state: '%s'", matchedCommand.Phrases[0])
-			go l.startCommandWithResponse(matchedCommand, text)
-		} else {
-			log.Printf("Regular command '%s' ignored in Idle state.", matchedCommand.Phrases[0])
-		}
-
-	case StateAwake:
-		log.Printf("Command matched in Awake state: '%s'", matchedCommand.Phrases[0])
-		l.SetState(StateProcessing)
-		if l.wakeTimer != nil {
-			l.wakeTimer.Stop()
-		}
-		go l.startCommandWithResponse(matchedCommand, text)
-	}
+	l.SetState(StateProcessing)
+	go l.startCommandWithResponse(matchedCommand, text)
 }
-
 func (l *Listener) startCommandWithResponse(cmd *Command, input string) {
-	defer l.SetState(StateIdle)
+	reqID := fmt.Sprintf("%d", time.Now().UnixNano())
 	ctx := &CommandContext{
-		Text:     input,
-		Response: make(chan string, 1),
+		Text:      input,
+		Response:  make(chan string, 1),
+		RequestID: reqID,
 	}
 	l.pendingMu.Lock()
-	l.pendingResponses[cmd] = ctx.Response
+	l.pendingResponses[reqID] = ctx.Response
 	l.pendingMu.Unlock()
-	cmd.Callback(ctx)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		cmd.Callback(ctx)
+	}()
+	<-done
 	l.pendingMu.Lock()
-	delete(l.pendingResponses, cmd)
+	delete(l.pendingResponses, reqID)
 	l.pendingMu.Unlock()
+	l.SetState(StateIdle)
 }
 
 func (l *Listener) SetState(s string) {
 	l.stateMu.Lock()
 	defer l.stateMu.Unlock()
+	if l.state == s {
+		return
+	}
 	log.Printf("Listener state changed: %s → %s", l.state, s)
 	l.state = s
 }
@@ -376,24 +440,21 @@ func (l *Listener) GetState() string {
 
 func (l *Listener) Close() {
 	l.closeOnce.Do(func() {
-		log.Println("Closing Voice Listener resources...")
+		close(l.stopCh)
 		if l.stream != nil {
 			l.stream.Stop()
 			l.stream.Close()
 		}
-		close(l.transcriptionCh)
-		l.wg.Wait()
 		if l.transcriber != nil {
 			l.transcriber.Close()
 		}
-		log.Println("Voice Listener closed.")
+		portaudio.Terminate()
 	})
 }
 
 func (l *Listener) WakeUp() {
-	err := actions.StopCurrentActions()
-	if err != nil {
-		log.Printf("Cant stop actions")
+	if err := actions.StopCurrentActions(); err != nil {
+		log.Printf("Cant stop actions: %v", err)
 	}
 	l.SetState(StateAwake)
 	log.Println("Listener is now AWAKE, listening for commands.")

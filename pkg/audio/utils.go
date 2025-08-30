@@ -59,52 +59,110 @@ func getAudioDuration(filePath string) (time.Duration, error) {
 	}
 	return time.Duration(durationFloat * float64(time.Second)), nil
 }
+
 func playFile(filename string, volume float64, stopChan chan any, adjustSystemVolume bool) error {
 	var cmd *exec.Cmd
-	var lowerVolumeCmd, restoreVolumeCmd *exec.Cmd
-	var originalVolume string
+	const playbackGain = "+1"
 
 	switch runtime.GOOS {
 	case "linux":
-		sink, err := commands.GetDefaultSinkName()
-		if err != nil || !adjustSystemVolume {
-			log.Println("Could not get default sink or volume adjustment disabled, playing normally")
+		if !adjustSystemVolume {
 			cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
 			break
 		}
-		originalVolume, err = getSystemVolumeLinux()
+
+		sink, err := runCommandWithOutput(exec.Command("pactl", "get-default-sink"))
 		if err != nil {
-			originalVolume = "100%"
+			log.Println("Could not get default sink, playing normally:", err)
+			cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume), "gain", playbackGain)
+			break
 		}
-		lowerVolumeCmd = exec.Command("pactl", "set-sink-volume", sink, "20%")
-		restoreVolumeCmd = exec.Command("pactl", "set-sink-volume", sink, originalVolume)
-		_ = commands.RunCommand(lowerVolumeCmd)
+
+		out, err := runCommandWithOutput(exec.Command("pactl", "get-sink-volume", sink))
+		if err != nil {
+			log.Println("Could not get current sink volume, playing normally:", err)
+			cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume), "gain", playbackGain)
+			break
+		}
+		originalVolume := strings.Split(strings.Split(out, "/")[1], "%")[0]
+		originalVolume = strings.TrimSpace(originalVolume) + "%"
+
+		log.Println("Lowering system volume for playback...")
+		err = commands.RunCommand(exec.Command("pactl", "set-sink-volume", sink, "30%"))
+		if err != nil {
+			log.Printf("Failed to lower system volume: %v. Playing without ducking.", err)
+			cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume), "gain", playbackGain)
+			break
+		}
+
 		defer func() {
 			log.Printf("Restoring system volume to: %s", originalVolume)
-			_ = commands.RunCommand(restoreVolumeCmd)
+			_ = commands.RunCommand(exec.Command("pactl", "set-sink-volume", sink, originalVolume))
 		}()
-		cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume))
+		cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume), "gain", playbackGain)
+
 	case "darwin":
-		cmd = exec.Command("afplay", filename)
+		if !adjustSystemVolume {
+			cmd = exec.Command("afplay", "-v", fmt.Sprintf("%.2f", volume), filename)
+			break
+		}
+		originalVolume, err := runCommandWithOutput(exec.Command("osascript", "-e", "output volume of (get volume settings)"))
+		if err != nil {
+			log.Println("Could not get current volume, playing normally:", err)
+			cmd = exec.Command("afplay", "-v", fmt.Sprintf("%.2f", volume), filename)
+			break
+		}
+
+		log.Println("Lowering system volume for playback...")
+		err = commands.RunCommand(exec.Command("osascript", "-e", "set volume output volume 25"))
+		if err != nil {
+			log.Printf("Failed to lower system volume: %v. Playing without ducking.", err)
+			cmd = exec.Command("afplay", "-v", fmt.Sprintf("%.2f", volume), filename)
+			break
+		}
+
+		defer func() {
+			log.Printf("Restoring system volume to: %s", originalVolume)
+			// Use your RunCommand in the defer block
+			_ = commands.RunCommand(exec.Command("osascript", "-e", fmt.Sprintf("set volume output volume %s", originalVolume)))
+		}()
+
+		cmd = exec.Command("afplay", "-v", fmt.Sprintf("%.2f", volume), filename)
+
 	case "windows":
-		cmd = exec.Command("powershell", "-c", fmt.Sprintf(`(New-Object Media.SoundPlayer "%s").PlaySync()`, filename))
+		if adjustSystemVolume {
+			log.Println("Audio ducking on Windows is best-effort. We will boost this app's volume only.")
+		}
+		cmd = exec.Command("play", "-q", filename, "vol", fmt.Sprintf("%.2f", volume), "gain", playbackGain)
+
 	default:
 		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
 	}
+
+	// The main playback command cannot use `RunCommand` because it uses `cmd.Run()`,
+	// which is blocking. We need `cmd.Start()` to manage it in a separate goroutine
+	// and allow the `stopChan` to interrupt it.
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+
 	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
+	go func() {
+		done <- cmd.Wait()
+	}()
+
 	select {
 	case <-stopChan:
-		log.Println("Playback stopped by StopCurrentSound")
+		log.Println("Playback stopped by external signal.")
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
 		}
 		return nil
 	case err := <-done:
-		return err
+		if err != nil {
+			return fmt.Errorf("playback command failed: %w", err)
+		}
+		return nil
 	}
 }
 
@@ -113,4 +171,12 @@ func GetAssetPath(filename string) string {
 		return filepath.Join("/app", "assets", filename)
 	}
 	return filepath.Join(config.GetUserConfigPath(), "assets", filename)
+}
+
+func runCommandWithOutput(cmd *exec.Cmd) (string, error) {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("error running command %v: %w, output: %s", cmd.Args, err, string(output))
+	}
+	return strings.TrimSpace(string(output)), nil
 }
