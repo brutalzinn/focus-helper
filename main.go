@@ -224,7 +224,6 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 
 	// Wake-up command
 	listener.RegisterWakeUpWord(func(ctx *voice.CommandContext) {
-		listener.WakeUp()
 		wakeAction := models.ActionConfig{
 			Type:      models.ActionSound,
 			SoundFile: "airplane_communication_start.mp3",
@@ -234,8 +233,13 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 	}, strings.Split(appState.Language.Get("command_wakeup_words"), ","))
 
 	// Mayday emergency command
-	listener.RegisterWakeUpWord(func(ctx *voice.CommandContext) {
+	listener.RegisterCommand(func(ctx *voice.CommandContext) {
 		log.Println("MAYDAY DETECTED - Triggering Emergency Protocol")
+		newAction := models.ActionConfig{
+			Type: models.ActionSpeak,
+			Text: "Entendi sua solicitação. Vamos vetorizar você até o aeroporto mais próximo. Você deve confirmar com sim ou não.",
+		}
+		actions.Execute(newAction)
 		go func() {
 			select {
 			case response := <-ctx.Response:
@@ -253,7 +257,7 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 						Text: "Que bom que está tudo bem.",
 					})
 				}
-			case <-time.After(60 * time.Second):
+			case <-time.After(15 * time.Second):
 				log.Println("Timeout excedido.")
 				actions.Execute(models.ActionConfig{
 					Type: models.ActionSpeak,
@@ -261,11 +265,7 @@ func registerVoiceCommands(listener *voice.Listener, appState *state.AppState) {
 				})
 			}
 		}()
-		startActions := []models.ActionConfig{
-			{Type: models.ActionSound, SoundFile: "airplane_communication_start.mp3"},
-			{Type: models.ActionSpeak, Text: "Entendi sua solicitação. Vamos vetorizar você até o aeroporto mais próximo. Você deve confirmar com sim ou não."},
-		}
-		actions.ExecuteSequence(startActions)
+
 	}, strings.Split(appState.Language.Get("command_mayday_words"), ","))
 
 	// Stop command

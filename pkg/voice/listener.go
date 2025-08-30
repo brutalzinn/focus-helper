@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	StateIdle       = "idle"
-	StateAwake      = "awake"
-	StateProcessing = "processing"
+	StateIdle               = "idle"
+	StateAwake              = "awake"
+	StateProcessing         = "processing"
+	StateWaitingForResponse = "waiting_for_response"
 )
 
 var wakeTimeout = 30 * time.Second
@@ -327,6 +328,26 @@ func (l *Listener) processCommands(text string) {
 	normText := normalizeText(text)
 	log.Printf("TRANSCRIBE normalize speech: '%s'", normText)
 	currentState := l.GetState()
+	if currentState == StateWaitingForResponse {
+		log.Println("Waiting by user response")
+		var delivered bool
+		l.pendingMu.Lock()
+		for id, respCh := range l.pendingResponses {
+			select {
+			case respCh <- normText:
+				log.Printf("Delivered speech to pending response id=%s", id)
+				delivered = true
+			default:
+				log.Printf("Pending response channel full id=%s", id)
+			}
+			delete(l.pendingResponses, id)
+		}
+		l.pendingMu.Unlock()
+		if delivered {
+			l.SetState(StateIdle)
+			return
+		}
+	}
 	for _, wakeCmd := range l.commands {
 		if !wakeCmd.IsActivation {
 			continue
@@ -334,53 +355,35 @@ func (l *Listener) processCommands(text string) {
 		for _, phrase := range wakeCmd.Phrases {
 			if strings.Contains(normText, phrase) {
 				if time.Since(lastWakeUp) < wakeCooldown {
-					break // skip duplicate trigger
+					break
 				}
 				lastWakeUp = time.Now()
 				log.Printf("Wake-up word matched: '%s'", phrase)
-				// Wake-up words never block commands
 				go wakeCmd.Callback(&CommandContext{
 					Text:     text,
 					Response: make(chan string, 1),
 				})
-				// Set listener awake
 				l.WakeUp()
-				// Do not process normal commands in this loop
 				return
 			}
 		}
 	}
 
-	// --- Deliver to pending responses ---
-	l.pendingMu.Lock()
-	for id, respCh := range l.pendingResponses {
-		select {
-		case respCh <- normText:
-			log.Printf("Delivered speech to pending response id=%s", id)
-		default:
-			log.Printf("Pending response channel full id=%s", id)
-		}
-	}
-	l.pendingMu.Unlock()
-
-	// Only process normal commands if listener is awake
 	if currentState != StateAwake {
 		log.Printf("Ignoring commands, listener not awake (state=%s)", currentState)
 		return
 	}
 
-	// Ignore if already processing
 	if currentState == StateProcessing {
 		log.Printf("Ignoring new command detection (state=processing).")
 		return
 	}
 
-	// --- Find normal command match ---
 	var matchedCommand *Command
 	for i := range l.commands {
 		cmd := &l.commands[i]
 		if cmd.IsActivation {
-			continue // skip wake-up words
+			continue
 		}
 		for _, phrase := range cmd.Phrases {
 			if strings.Contains(normText, phrase) {
@@ -393,13 +396,13 @@ func (l *Listener) processCommands(text string) {
 			break
 		}
 	}
-
 	if matchedCommand == nil {
 		return
 	}
 	l.SetState(StateProcessing)
 	go l.startCommandWithResponse(matchedCommand, text)
 }
+
 func (l *Listener) startCommandWithResponse(cmd *Command, input string) {
 	reqID := fmt.Sprintf("%d", time.Now().UnixNano())
 	ctx := &CommandContext{
@@ -410,15 +413,17 @@ func (l *Listener) startCommandWithResponse(cmd *Command, input string) {
 	l.pendingMu.Lock()
 	l.pendingResponses[reqID] = ctx.Response
 	l.pendingMu.Unlock()
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		cmd.Callback(ctx)
-	}()
-	<-done
-	l.pendingMu.Lock()
-	delete(l.pendingResponses, reqID)
-	l.pendingMu.Unlock()
+	l.SetState(StateWaitingForResponse)
+	go cmd.Callback(ctx)
+}
+
+func (l *Listener) checkForWakeTimeout() {
+	currentState := l.GetState()
+	if currentState == StateWaitingForResponse {
+		log.Printf("Wake timeout check skipped, listener is busy waiting for a response.")
+		return
+	}
+	log.Println("Wake timeout expired, returning to IDLE state.")
 	l.SetState(StateIdle)
 }
 
@@ -462,7 +467,6 @@ func (l *Listener) WakeUp() {
 		l.wakeTimer.Stop()
 	}
 	l.wakeTimer = time.AfterFunc(wakeTimeout, func() {
-		log.Println("Wake timeout expired, returning to IDLE state.")
-		l.SetState(StateIdle)
+		l.checkForWakeTimeout()
 	})
 }
