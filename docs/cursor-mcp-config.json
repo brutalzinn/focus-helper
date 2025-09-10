@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "focus-helper": {
+      "command": "node",
+      "args": ["/home/robertocpaes/Projects/Pessoal/focus-helper/mcp-server.js"],
+      "env": {}
+    }
+  }
+}

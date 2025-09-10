@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MCP Integration - Focus Helper</title>
+<meta name="description" content="Model Context Protocol integration for external tools">
+<meta name="generator" content="Hugo 0.150.0">
+<link href="http://localhost:1313//index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="http://localhost:1313/mcp-integration/">
+<link rel="stylesheet" href="http://localhost:1313/css/theme.min.css">
+<link rel="stylesheet" href="http://localhost:1313/css/chroma.min.css">
+<script defer src="http://localhost:1313//js/fontawesome6/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js" integrity="sha256-H3cjtrm/ztDeuhCN9I4yh4iN2Ybx/y1RM7rMmAesA0k=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js" integrity="sha256-4XodgW4TwIJuDtf+v6vDJ39FVxI0veC/kSCCmnFp7ck=" crossorigin="anonymous"></script>
+<script src="http://localhost:1313/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:url" content="http://localhost:1313/mcp-integration/">
+  <meta property="og:site_name" content="Focus Helper">
+  <meta property="og:title" content="MCP Integration">
+  <meta property="og:description" content="Model Context Protocol integration for external tools">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="MCP Integration">
+  <meta name="twitter:description" content="Model Context Protocol integration for external tools">
+
+  <meta itemprop="name" content="MCP Integration">
+  <meta itemprop="description" content="Model Context Protocol integration for external tools">
+  <meta itemprop="datePublished" content="2025-09-09T19:00:00+00:00">
+  <meta itemprop="dateModified" content="2025-09-09T19:00:00+00:00">
+  <meta itemprop="wordCount" content="1060"></head>
+<body>
+
+<div class="container"><header>
+<h1>Focus Helper</h1>
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li class=""><a href="/">Home</a></li>
+<li class=""><a href="/getting-started/">Getting Started</a></li>
+<li class=""><a href="/features/">Features</a></li>
+<li class=""><a href="/configuration/">Configuration</a></li>
+<li class=""><a href="/mcp-integration/">MCP Integration</a></li>
+<li class=""><a href="/docker/">Docker</a></li>
+<li class=""><a href="/api-reference/">API Reference</a></li>
+<li class=""><a href="/examples/">Examples</a></li></ul>
+</nav>
+</div>
+
+<div class="content-container">
+<main><h1>MCP Integration</h1><h1 id="mcp-integration">MCP Integration</h1>
+<p>Focus Helper includes a comprehensive Model Context Protocol (MCP) server that enables integration with external tools and applications, including Cursor IDE.</p>
+<h2 id="overview">Overview</h2>
+<p>The MCP server provides a standardized interface for external applications to interact with Focus Helper, enabling:</p>
+<ul>
+<li><strong>Real-time Session Monitoring</strong>: Access live session data</li>
+<li><strong>Alert Management</strong>: Trigger and monitor alert levels</li>
+<li><strong>Hyperfocus Detection</strong>: Monitor hyperfocus states</li>
+<li><strong>Voice Command Integration</strong>: Interact with voice commands</li>
+<li><strong>Data Export</strong>: Access session analytics</li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="1-enable-mcp-server">1. Enable MCP Server</h3>
+<p>Start Focus Helper with MCP server enabled:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Basic MCP server</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">focushelper --mcp
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Custom port</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">focushelper --mcp --mcp-port <span class="m">9090</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">
+</span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="c1"># With Docker mode</span>
+</span></span><span class="line"><span class="ln">8</span><span class="cl">focushelper --mcp --docker
+</span></span></code></pre></div><h3 id="2-test-connection">2. Test Connection</h3>
+<p>Verify the MCP server is running:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl http://localhost:8089/health
+</span></span></code></pre></div><p>Expected response:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;status&#34;</span><span class="p">:</span> <span class="s2">&#34;healthy&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;service&#34;</span><span class="p">:</span> <span class="s2">&#34;focus-helper-mcp&#34;</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="3-test-api-endpoints">3. Test API Endpoints</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Get session information</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">curl -X POST http://localhost:8089/mcp <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span>  -H <span class="s2">&#34;Content-Type: application/json&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="se"></span>  -d <span class="s1">&#39;{&#34;jsonrpc&#34;:&#34;2.0&#34;,&#34;id&#34;:1,&#34;method&#34;:&#34;get_session_info&#34;,&#34;params&#34;:{}}&#39;</span>
+</span></span></code></pre></div><h2 id="api-reference">API Reference</h2>
+<h3 id="base-url">Base URL</h3>
+<pre tabindex="0"><code>http://localhost:8089
+</code></pre><h3 id="health-check">Health Check</h3>
+<pre tabindex="0"><code>GET /health
+</code></pre><h3 id="mcp-endpoints">MCP Endpoints</h3>
+<pre tabindex="0"><code>POST /mcp
+</code></pre><h2 id="available-methods">Available Methods</h2>
+<h3 id="1-get-session-information">1. Get Session Information</h3>
+<p>Retrieve current session details including duration, hyperfocus status, and activity.</p>
+<p><strong>Request:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;get_session_info&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">  <span class="nt">&#34;params&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><strong>Response:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">  <span class="nt">&#34;result&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="nt">&#34;session_id&#34;</span><span class="p">:</span> <span class="s2">&#34;session_123&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">    <span class="nt">&#34;subject&#34;</span><span class="p">:</span> <span class="s2">&#34;General Use&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">    <span class="nt">&#34;start_time&#34;</span><span class="p">:</span> <span class="s2">&#34;2025-09-09T18:00:00Z&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">    <span class="nt">&#34;current_time&#34;</span><span class="p">:</span> <span class="s2">&#34;2025-09-09T18:30:00Z&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">    <span class="nt">&#34;duration&#34;</span><span class="p">:</span> <span class="s2">&#34;30m0s&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">    <span class="nt">&#34;is_active&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">    <span class="nt">&#34;hyperfocus_level&#34;</span><span class="p">:</span> <span class="s2">&#34;low&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">    <span class="nt">&#34;hyperfocus_start_time&#34;</span><span class="p">:</span> <span class="s2">&#34;2025-09-09T18:15:00Z&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">    <span class="nt">&#34;hyperfocus_duration&#34;</span><span class="p">:</span> <span class="s2">&#34;15m0s&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">    <span class="nt">&#34;last_activity_time&#34;</span><span class="p">:</span> <span class="s2">&#34;2025-09-09T18:29:30Z&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">    <span class="nt">&#34;idle_duration&#34;</span><span class="p">:</span> <span class="s2">&#34;30s&#34;</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">17</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="2-get-alert-levels">2. Get Alert Levels</h3>
+<p>Retrieve available alert levels and their configurations.</p>
+<p><strong>Request:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;get_alert_levels&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">  <span class="nt">&#34;params&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><strong>Response:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">  <span class="nt">&#34;result&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">      <span class="nt">&#34;index&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">      <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;low&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">      <span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">      <span class="nt">&#34;threshold&#34;</span><span class="p">:</span> <span class="s2">&#34;45m0s&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">      <span class="nt">&#34;tolerance&#34;</span><span class="p">:</span> <span class="mf">1.0</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">    <span class="p">},</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">      <span class="nt">&#34;index&#34;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">      <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;medium&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">      <span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">      <span class="nt">&#34;threshold&#34;</span><span class="p">:</span> <span class="s2">&#34;90m0s&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">17</span><span class="cl">      <span class="nt">&#34;tolerance&#34;</span><span class="p">:</span> <span class="mf">0.8</span>
+</span></span><span class="line"><span class="ln">18</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">19</span><span class="cl">  <span class="p">]</span>
+</span></span><span class="line"><span class="ln">20</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="3-trigger-alert">3. Trigger Alert</h3>
+<p>Trigger a specific alert level by index.</p>
+<p><strong>Request:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;trigger_alert&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">  <span class="nt">&#34;params&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">    <span class="nt">&#34;alert_index&#34;</span><span class="p">:</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="ln">7</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">8</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><strong>Response:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;result&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">    <span class="nt">&#34;success&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">    <span class="nt">&#34;message&#34;</span><span class="p">:</span> <span class="s2">&#34;Alert level low triggered&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">7</span><span class="cl">    <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;low&#34;</span>
+</span></span><span class="line"><span class="ln">8</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">9</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="4-get-hyperfocus-status">4. Get Hyperfocus Status</h3>
+<p>Retrieve current hyperfocus state and duration.</p>
+<p><strong>Request:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;get_hyperfocus_status&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">  <span class="nt">&#34;params&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><strong>Response:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">  <span class="nt">&#34;result&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="nt">&#34;is_hyperfocus&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">    <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;low&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">    <span class="nt">&#34;start_time&#34;</span><span class="p">:</span> <span class="s2">&#34;2025-09-09T18:15:00Z&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">    <span class="nt">&#34;duration&#34;</span><span class="p">:</span> <span class="s2">&#34;15m0s&#34;</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="5-ping">5. Ping</h3>
+<p>Test connection to the MCP server.</p>
+<p><strong>Request:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;ping&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">  <span class="nt">&#34;params&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><strong>Response:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;result&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">    <span class="nt">&#34;pong&#34;</span><span class="p">:</span> <span class="s2">&#34;focus-helper-mcp&#34;</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="cursor-ide-integration">Cursor IDE Integration</h2>
+<h3 id="setup">Setup</h3>
+<ol>
+<li>
+<p><strong>Start Focus Helper with MCP</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">focushelper --mcp
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Configure Cursor MCP Settings</strong>:
+Add to your Cursor settings:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;mcpServers&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">    <span class="nt">&#34;focus-helper&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">      <span class="nt">&#34;command&#34;</span><span class="p">:</span> <span class="s2">&#34;node&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">      <span class="nt">&#34;args&#34;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&#34;/path/to/focus-helper/mcp-server.js&#34;</span><span class="p">],</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">      <span class="nt">&#34;env&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">7</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">8</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">9</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Restart Cursor</strong></p>
+</li>
+</ol>
+<h3 id="available-tools-in-cursor">Available Tools in Cursor</h3>
+<p>Once connected, you&rsquo;ll have access to these tools:</p>
+<ul>
+<li><strong><code>get_session_info</code></strong>: Get current focus session status</li>
+<li><strong><code>get_alert_levels</code></strong>: View available alert levels</li>
+<li><strong><code>trigger_alert</code></strong>: Trigger specific alert levels</li>
+<li><strong><code>get_hyperfocus_status</code></strong>: Check hyperfocus state</li>
+<li><strong><code>ping</code></strong>: Test connection</li>
+</ul>
+<h3 id="example-interactions">Example Interactions</h3>
+<p><strong>Check Focus Status:</strong></p>
+<pre tabindex="0"><code>You: &#34;What&#39;s my current focus session status?&#34;
+Cursor: [Uses get_session_info tool]
+Response: &#34;You&#39;ve been focused for 45 minutes on &#39;General Use&#39;. 
+          You&#39;re currently in a &#39;low&#39; hyperfocus state.&#34;
+</code></pre><p><strong>Request Break Reminder:</strong></p>
+<pre tabindex="0"><code>You: &#34;I need a break reminder&#34;
+Cursor: [Uses trigger_alert tool with index 0]
+Response: &#34;I&#39;ve triggered a low-level alert for you.&#34;
+</code></pre><h2 id="client-libraries">Client Libraries</h2>
+<h3 id="go-client">Go Client</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="kn">package</span><span class="w"> </span><span class="nx">main</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w"></span><span class="kn">import</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">    </span><span class="s">&#34;fmt&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">    </span><span class="s">&#34;time&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w"></span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w"></span><span class="kd">func</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">    </span><span class="nx">client</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nf">NewMCPClient</span><span class="p">(</span><span class="s">&#34;http://localhost:8089&#34;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">    
+</span></span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="w">    </span><span class="c1">// Get session info</span><span class="w">
+</span></span></span><span class="line"><span class="ln">12</span><span class="cl"><span class="w">    </span><span class="nx">session</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nf">GetSessionInfo</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="ln">13</span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="ln">14</span><span class="cl"><span class="w">        </span><span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="ln">15</span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="ln">16</span><span class="cl"><span class="w">    
+</span></span></span><span class="line"><span class="ln">17</span><span class="cl"><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;Session duration: %s\n&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">session</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="ln">18</span><span class="cl"><span class="w">    
+</span></span></span><span class="line"><span class="ln">19</span><span class="cl"><span class="w">    </span><span class="c1">// Trigger alert</span><span class="w">
+</span></span></span><span class="line"><span class="ln">20</span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nf">TriggerAlert</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="ln">21</span><span class="cl"><span class="w">        </span><span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="ln">22</span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="ln">23</span><span class="cl"><span class="w"></span><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><h3 id="python-client">Python Client</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="kn">import</span> <span class="nn">requests</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="kn">import</span> <span class="nn">json</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="k">class</span> <span class="nc">MCPClient</span><span class="p">:</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_url</span><span class="o">=</span><span class="s2">&#34;http://localhost:8089&#34;</span><span class="p">):</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">=</span> <span class="n">base_url</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&#34;Content-Type&#34;</span><span class="p">:</span> <span class="s2">&#34;application/json&#34;</span><span class="p">})</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">    
+</span></span><span class="line"><span class="ln">10</span><span class="cl">    <span class="k">def</span> <span class="nf">get_session_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">            <span class="s2">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">            <span class="s2">&#34;id&#34;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">            <span class="s2">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;get_session_info&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">            <span class="s2">&#34;params&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="ln">17</span><span class="cl">        
+</span></span><span class="line"><span class="ln">18</span><span class="cl">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/mcp&#34;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+</span></span><span class="line"><span class="ln">19</span><span class="cl">        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</span></span><span class="line"><span class="ln">20</span><span class="cl">
+</span></span><span class="line"><span class="ln">21</span><span class="cl"><span class="c1"># Usage</span>
+</span></span><span class="line"><span class="ln">22</span><span class="cl"><span class="n">client</span> <span class="o">=</span> <span class="n">MCPClient</span><span class="p">()</span>
+</span></span><span class="line"><span class="ln">23</span><span class="cl"><span class="n">session</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_session_info</span><span class="p">()</span>
+</span></span><span class="line"><span class="ln">24</span><span class="cl"><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Session duration: </span><span class="si">{</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">][</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span></code></pre></div><h3 id="javascriptnodejs-client">JavaScript/Node.js Client</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="kr">const</span> <span class="nx">http</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;http&#39;</span><span class="p">);</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="kr">class</span> <span class="nx">MCPClient</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">    <span class="nx">constructor</span><span class="p">(</span><span class="nx">baseUrl</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:8089&#39;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">        <span class="k">this</span><span class="p">.</span><span class="nx">baseUrl</span> <span class="o">=</span> <span class="nx">baseUrl</span><span class="p">;</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">    
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">    <span class="kr">async</span> <span class="nx">sendRequest</span><span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{})</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">        <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">            <span class="kr">const</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">                <span class="nx">jsonrpc</span><span class="o">:</span> <span class="s1">&#39;2.0&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">                <span class="nx">id</span><span class="o">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">(),</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">                <span class="nx">method</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">                <span class="nx">params</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">            <span class="p">});</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">            
+</span></span><span class="line"><span class="ln">17</span><span class="cl">            <span class="kr">const</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">18</span><span class="cl">                <span class="nx">hostname</span><span class="o">:</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">19</span><span class="cl">                <span class="nx">port</span><span class="o">:</span> <span class="mi">8089</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">20</span><span class="cl">                <span class="nx">path</span><span class="o">:</span> <span class="s1">&#39;/mcp&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">21</span><span class="cl">                <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">22</span><span class="cl">                <span class="nx">headers</span><span class="o">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">23</span><span class="cl">                    <span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">24</span><span class="cl">                    <span class="s1">&#39;Content-Length&#39;</span><span class="o">:</span> <span class="nx">Buffer</span><span class="p">.</span><span class="nx">byteLength</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span>
+</span></span><span class="line"><span class="ln">25</span><span class="cl">                <span class="p">}</span>
+</span></span><span class="line"><span class="ln">26</span><span class="cl">            <span class="p">};</span>
+</span></span><span class="line"><span class="ln">27</span><span class="cl">            
+</span></span><span class="line"><span class="ln">28</span><span class="cl">            <span class="kr">const</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">http</span><span class="p">.</span><span class="nx">request</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">29</span><span class="cl">                <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="ln">30</span><span class="cl">                <span class="nx">res</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="nx">chunk</span> <span class="p">=&gt;</span> <span class="nx">body</span> <span class="o">+=</span> <span class="nx">chunk</span><span class="p">);</span>
+</span></span><span class="line"><span class="ln">31</span><span class="cl">                <span class="nx">res</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">32</span><span class="cl">                    <span class="k">try</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">33</span><span class="cl">                        <span class="nx">resolve</span><span class="p">(</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">body</span><span class="p">));</span>
+</span></span><span class="line"><span class="ln">34</span><span class="cl">                    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">35</span><span class="cl">                        <span class="nx">reject</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span>
+</span></span><span class="line"><span class="ln">36</span><span class="cl">                    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">37</span><span class="cl">                <span class="p">});</span>
+</span></span><span class="line"><span class="ln">38</span><span class="cl">            <span class="p">});</span>
+</span></span><span class="line"><span class="ln">39</span><span class="cl">            
+</span></span><span class="line"><span class="ln">40</span><span class="cl">            <span class="nx">req</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="nx">reject</span><span class="p">);</span>
+</span></span><span class="line"><span class="ln">41</span><span class="cl">            <span class="nx">req</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+</span></span><span class="line"><span class="ln">42</span><span class="cl">            <span class="nx">req</span><span class="p">.</span><span class="nx">end</span><span class="p">();</span>
+</span></span><span class="line"><span class="ln">43</span><span class="cl">        <span class="p">});</span>
+</span></span><span class="line"><span class="ln">44</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">45</span><span class="cl">    
+</span></span><span class="line"><span class="ln">46</span><span class="cl">    <span class="kr">async</span> <span class="nx">getSessionInfo</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">47</span><span class="cl">        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">sendRequest</span><span class="p">(</span><span class="s1">&#39;get_session_info&#39;</span><span class="p">);</span>
+</span></span><span class="line"><span class="ln">48</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">49</span><span class="cl">    
+</span></span><span class="line"><span class="ln">50</span><span class="cl">    <span class="kr">async</span> <span class="nx">triggerAlert</span><span class="p">(</span><span class="nx">alertIndex</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">51</span><span class="cl">        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">sendRequest</span><span class="p">(</span><span class="s1">&#39;trigger_alert&#39;</span><span class="p">,</span> <span class="p">{</span> <span class="nx">alert_index</span><span class="o">:</span> <span class="nx">alertIndex</span> <span class="p">});</span>
+</span></span><span class="line"><span class="ln">52</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">53</span><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="ln">54</span><span class="cl">
+</span></span><span class="line"><span class="ln">55</span><span class="cl"><span class="c1">// Usage
+</span></span></span><span class="line"><span class="ln">56</span><span class="cl"><span class="c1"></span><span class="kr">const</span> <span class="nx">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MCPClient</span><span class="p">();</span>
+</span></span><span class="line"><span class="ln">57</span><span class="cl"><span class="nx">client</span><span class="p">.</span><span class="nx">getSessionInfo</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">);</span>
+</span></span></code></pre></div><h2 id="error-handling">Error Handling</h2>
+<h3 id="standard-error-codes">Standard Error Codes</h3>
+<ul>
+<li><code>-32700</code>: Parse error</li>
+<li><code>-32600</code>: Invalid Request</li>
+<li><code>-32601</code>: Method not found</li>
+<li><code>-32602</code>: Invalid params</li>
+<li><code>-32603</code>: Internal error</li>
+</ul>
+<h3 id="error-response-format">Error Response Format</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;jsonrpc&#34;</span><span class="p">:</span> <span class="s2">&#34;2.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;error&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">    <span class="nt">&#34;code&#34;</span><span class="p">:</span> <span class="mi">-32602</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">    <span class="nt">&#34;message&#34;</span><span class="p">:</span> <span class="s2">&#34;Invalid params&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">7</span><span class="cl">    <span class="nt">&#34;data&#34;</span><span class="p">:</span> <span class="s2">&#34;alert_index parameter required&#34;</span>
+</span></span><span class="line"><span class="ln">8</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">9</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="security-considerations">Security Considerations</h2>
+<ul>
+<li><strong>Local Access Only</strong>: MCP server binds to localhost</li>
+<li><strong>No Authentication</strong>: Suitable for local development</li>
+<li><strong>CORS Enabled</strong>: Cross-origin requests allowed</li>
+<li><strong>Rate Limiting</strong>: Consider implementing for production use</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="connection-issues">Connection Issues</h3>
+<ol>
+<li>
+<p><strong>Check if Focus Helper is running</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">ps aux <span class="p">|</span> grep focushelper
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Verify MCP server is accessible</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl http://localhost:8089/health
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Check port availability</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">netstat -tulpn <span class="p">|</span> grep :8089
+</span></span></code></pre></div></li>
+</ol>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong>Connection Refused</strong>: Focus Helper not running or wrong port</li>
+<li><strong>Method Not Found</strong>: Incorrect method name</li>
+<li><strong>Invalid Params</strong>: Missing or incorrect parameters</li>
+<li><strong>Internal Error</strong>: Focus Helper internal issue</li>
+</ul>
+<hr>
+<p><strong>Ready to integrate?</strong> Check out our <a href="/examples/">Examples</a> section for more detailed integration examples and use cases.</p>
+<div class="edit-meta">
+Last updated on 9 Sep 2025
+
+
+<br>
+Published on 9 Sep 2025
+<br></div><nav class="pagination"><a class="nav nav-prev" href="http://localhost:1313/features/" title="Features"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - Features</a>
+<a class="nav nav-next" href="http://localhost:1313/docker/" title="Docker Support">Next - Docker Support <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

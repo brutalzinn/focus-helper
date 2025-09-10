@@ -1,0 +1,123 @@
+baseURL: 'https://focus-helper.dev'
+title: 'Focus Helper'
+languageCode: 'en-us'
+theme: 'hugo-theme-techdoc'
+
+# Site configuration
+params:
+  # Theme configuration
+  themeVariant: 'auto' # 'light', 'dark', or 'auto'
+  homeTitle: 'Focus Helper Documentation'
+  homeSubtitle: 'AI-powered focus management for autistic individuals'
+  
+  # Navigation
+  menu:
+    main:
+      - name: 'Home'
+        url: '/'
+        weight: 10
+      - name: 'Getting Started'
+        url: '/getting-started/'
+        weight: 20
+      - name: 'Features'
+        url: '/features/'
+        weight: 30
+      - name: 'Configuration'
+        url: '/configuration/'
+        weight: 40
+      - name: 'MCP Integration'
+        url: '/mcp-integration/'
+        weight: 50
+      - name: 'Docker'
+        url: '/docker/'
+        weight: 60
+      - name: 'API Reference'
+        url: '/api-reference/'
+        weight: 70
+      - name: 'Examples'
+        url: '/examples/'
+        weight: 80
+
+  # Features
+  features:
+    - title: 'Hyperfocus Detection'
+      description: 'AI-powered detection of hyperfocus states with configurable alert levels'
+      icon: 'fas fa-brain'
+    - title: 'Voice Commands'
+      description: 'Natural language voice commands for hands-free control'
+      icon: 'fas fa-microphone'
+    - title: 'Session Management'
+      description: 'Persistent session tracking with configurable timeouts'
+      icon: 'fas fa-clock'
+    - title: 'MCP Integration'
+      description: 'Model Context Protocol server for external tool integration'
+      icon: 'fas fa-plug'
+    - title: 'Docker Support'
+      description: 'Containerized deployment with flexible audio handling'
+      icon: 'fab fa-docker'
+    - title: 'Real-time Monitoring'
+      description: 'Live activity monitoring with intelligent analysis'
+      icon: 'fas fa-chart-line'
+
+  # Social links
+  social:
+    - name: 'GitHub'
+      url: 'https://github.com/robertocpaes/focus-helper'
+      icon: 'fab fa-github'
+
+# Build configuration
+buildDrafts: false
+buildFuture: false
+buildExpired: false
+
+# Markup configuration
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+  highlight:
+    style: 'github'
+    lineNos: true
+    lineNumbersInTable: false
+    noClasses: false
+
+# Output formats
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
+# Taxonomies
+taxonomies:
+  category: categories
+  tag: tags
+  series: series
+
+# Menu configuration
+menu:
+  main:
+    - name: 'Home'
+      url: '/'
+      weight: 10
+    - name: 'Getting Started'
+      url: '/getting-started/'
+      weight: 20
+    - name: 'Features'
+      url: '/features/'
+      weight: 30
+    - name: 'Configuration'
+      url: '/configuration/'
+      weight: 40
+    - name: 'MCP Integration'
+      url: '/mcp-integration/'
+      weight: 50
+    - name: 'Docker'
+      url: '/docker/'
+      weight: 60
+    - name: 'API Reference'
+      url: '/api-reference/'
+      weight: 70
+    - name: 'Examples'
+      url: '/examples/'
+      weight: 80

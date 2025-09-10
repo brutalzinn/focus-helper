@@ -1,27 +1,26 @@
 
 services:
-  focus-audio:
+  focus-helper:
     build:
       context: .
       dockerfile: Dockerfile
-    network_mode: host
+    container_name: focus-helper
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
     environment:
-      - OTO_DRIVER=pulseaudio
-      - PULSE_SERVER=${XDG_RUNTIME_DIR}/pulse/native
-      - DISPLAY=${DISPLAY}
-      # - OLLAMA_ENDPOINT=http://host.docker.internal:11434
-    security_opt:
-      - seccomp:unconfined
+      - FOCUSHELPER_DOCKER_MODE=true
     volumes:
-      - ./assets:/app/assets
-      - ./voices:/app/voices
-      - ~/.config/pulse/cookie:/root/.config/pulse/cookie
-      - /tmp/.X11-unix:/tmp/.X11-unix:ro
-      - ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native
+      - focus-helper-data:/home/focushelper/.config/focushelper
     devices:
       - "/dev/snd:/dev/snd"
-    tty: true
-    restart: "no"
-    stdin_open: true
+    privileged: true
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
     group_add:
       - audio
+
+volumes:
+  focus-helper-data:

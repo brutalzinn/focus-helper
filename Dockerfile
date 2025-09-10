@@ -1,102 +1,75 @@
-# Stage 1: The Build Environment
-# Stage 1: The Build Environment
-FROM ubuntu:22.04 AS builder
+# Multi-stage build for focus-helper
+FROM golang:1.21-alpine AS builder
 
-# Set environment variables to avoid interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install Go 1.24.2 and build dependencies
-RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    && add-apt-repository -y ppa:longsleep/golang-backports \
-    && apt-get update \
-    && apt-get install -y golang-1.24-go \
-    && ln -s /usr/lib/go-1.24/bin/go /usr/local/bin/go \
-    && ln -s /usr/lib/go-1.24/bin/gofmt /usr/local/bin/gofmt
-
-# Enable universe repository and install build dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
+# Install build dependencies
+RUN apk add --no-cache \
+    gcc \
+    g++ \
+    make \
     cmake \
-    pkg-config \
-    libgtk-3-dev \
-    libasound2-dev \
-    libx11-dev \
-    libxtst-dev \
-    x11proto-dev \
-    libportaudio2 \
-    portaudio19-dev \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+    pkgconfig \
+    alsa-lib-dev \
+    portaudio-dev \
+    ffmpeg-dev
 
-# Clone whisper.cpp
+# Set working directory
 WORKDIR /app
-RUN git clone https://github.com/ggerganov/whisper.cpp.git
-WORKDIR /app/whisper.cpp
 
-# ==================== MUDANÇAS AQUI ====================
-
-# Compila whisper.cpp e ggml usando cmake para um build mais robusto e estático
-RUN cmake -S . -B build -DBUILD_SHARED_LIBS=OFF
-RUN cmake --build build --target whisper ggml -j$(nproc)
-
-# Retorna ao diretório da aplicação Go
-WORKDIR /app/src
-
-# Copia e baixa as dependências Go
+# Copy go mod files
 COPY go.mod go.sum ./
+
+# Download dependencies
 RUN go mod download
+
+# Copy source code
 COPY . .
 
-# Compila o binário Go com as flags CGO corrigidas
-RUN CGO_ENABLED=1 \
-    CGO_CFLAGS="-I/app/whisper.cpp -I/app/whisper.cpp/ggml" \
-    CGO_LDFLAGS="-L/app/whisper.cpp/build -lwhisper -lggml -lstdc++ -lm -lportaudio" \
-    go build -o /focus-helper .
+# Build the application
+RUN make build
 
-# ... (resto do seu arquivo)
-
-# Stage 3: Final Runtime Image
-FROM ubuntu:22.04
-
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
+# Runtime stage
+FROM alpine:latest
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libasound2 \
-    libgtk-3-0 \
-    libxtst6 \
-    libx11-6 \
-    libespeak-ng1 \
-    libxext6 \
-    libxrandr2 \
-    libcanberra-gtk-module \
-    libcanberra-gtk3-module \
-    libportaudio2 \
-    sox \
+RUN apk add --no-cache \
+    alsa-lib \
+    portaudio \
     ffmpeg \
-    pulseaudio-utils \
-    wget \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+    sox \
+    pulseaudio-utils
 
-# Download and install Piper
-RUN wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_amd64.tar.gz -O /tmp/piper.tar.gz && \
-    mkdir -p /opt/piper && \
-    tar -zxvf /tmp/piper.tar.gz -C /opt/piper --strip-components=1 && \
-    ln -s /opt/piper/piper /usr/local/bin/piper && \
-    rm /tmp/piper.tar.gz
+# Create app user
+RUN adduser -D -s /bin/sh focushelper
 
-# Copy the built binary and whisper.cpp library
+# Set working directory
 WORKDIR /app
-COPY --from=builder /focus-helper /app/focus-helper
-COPY --from=builder /app/whisper.cpp/libwhisper.a /app/libwhisper.a
 
-# Create a non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
+# Copy built binary
+COPY --from=builder /app/focushelper /usr/local/bin/focushelper
 
-# Set the entry point
-ENTRYPOINT ["/app/focus-helper"]
+# Copy configuration files
+COPY --from=builder /app/profiles.json /app/profiles.json
+COPY --from=builder /app/langs /app/langs
+COPY --from=builder /app/assets /app/assets
+COPY --from=builder /app/voices /app/voices
+
+# Create config directory
+RUN mkdir -p /home/focushelper/.config/focushelper
+
+# Copy configuration to user directory
+RUN cp -r /app/* /home/focushelper/.config/focushelper/
+
+# Set ownership
+RUN chown -R focushelper:focushelper /home/focushelper
+
+# Switch to app user
+USER focushelper
+
+# Set environment variables for Docker mode
+ENV FOCUSHELPER_DOCKER_MODE=true
+
+# Expose port
+EXPOSE 8088
+
+# Run the application in Docker mode
+CMD ["focushelper", "--docker"]

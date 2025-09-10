@@ -1,91 +1,180 @@
-# ♾️ Focus Helper: ATC Edition
+# Focus Helper
 
-A personal focus assistant that simulates an Air Traffic Control (ATC) tower to help you disconnect from the computer and avoid hyperfocus. A tool that every people can be usefull to warning about future crises caused by autism burnout
+**AI-powered focus management for autistic individuals**
 
-# About The Project
+Focus Helper is a sophisticated application designed to help autistic individuals manage their hyperfocus experiences. When hyperfocus becomes overwhelming and requires external intervention, Focus Helper provides intelligent monitoring, voice commands, and automated alerts to help maintain healthy focus patterns.
 
-In the world of deep work, it's easy to lose track of time and fall into a state of hyperfocus, neglecting necessary breaks and other tasks. Focus Helper ATC acts as your personal air traffic controller for your attention.
+## 🚀 Quick Start
 
-Instead of managing planes, it manages your "focus flights." You declare a task and a time, and the tower guides you to a safe "landing" when your time is up, reminding you to take a break, switch tasks, or disconnect. This prevents burnout and helps maintain a healthy work-life balance by ensuring you remain in control of your focus, not the other way around.
-Getting Started on Ubuntu
+```bash
+# Clone the repository
+git clone https://github.com/robertocpaes/focus-helper.git
+cd focus-helper
 
-This guide will walk you through setting up and running the project on an Ubuntu-based system.
-Prerequisites
+# Build and install
+make build
+make move
 
-First, you need to install the necessary build tools and the Go programming language.
+# Start the application
+focushelper --mcp
+```
 
-    Install Build Tools & Git:
-    Open your terminal and run the following command to install git, make, cmake, and the C/C++ compiler toolchain.
+## 📚 Documentation
 
-    sudo apt update && sudo apt install git make cmake build-essential
+**📖 [View Full Documentation](docs/)**
 
-    Install Go:
-    We recommend installing Go from the official source to avoid environment conflicts.
+Our comprehensive documentation is built with Hugo and includes:
 
-    # Download the latest version (check go.dev/dl for the newest link)
-    wget https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
+- **[Getting Started](docs/content/getting-started/)** - Quick setup and first run
+- **[Features](docs/content/features/)** - Complete feature overview
+- **[MCP Integration](docs/content/mcp-integration/)** - External tool integration
+- **[Docker Support](docs/content/docker/)** - Containerized deployment
+- **[Examples](docs/content/examples/)** - Practical examples and use cases
+  - [n8n Integration](docs/content/examples/n8n-integration.md) - Workflow automation
+  - [Cursor IDE Integration](docs/CURSOR_INTEGRATION.md) - Code editor integration
+  - [Go Client](docs/content/examples/mcp_client.go) - Go client library
+  - [Python Client](docs/content/examples/mcp_client.py) - Python client library
 
-    # Install Go to the standard location
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf go1.22.5.linux-amd64.tar.gz
+### Local Documentation
 
-    # Add Go to your system's PATH
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
-    source ~/.profile
+To view the documentation locally:
 
-    To verify the installation, open a new terminal and run go version. You should see the installed version number.
+```bash
+cd docs
+make setup    # First time setup
+make serve    # Start development server
+```
 
-Installation & Setup
+Then open `http://localhost:1313` in your browser.
 
-With the prerequisites installed, you can now set up the project with a single command.
+## ✨ Key Features
 
-    Clone the Repository:
+- **🧠 Intelligent Hyperfocus Detection** - AI-powered analysis with configurable alert levels and optimized LLM calls
+- **🎤 Voice Commands** - Natural language voice recognition in Portuguese and English
+- **⏱️ Session Management** - Persistent session tracking with configurable timeouts
+- **🔌 MCP Integration** - Model Context Protocol server for external tool integration
+- **🐳 Docker Support** - Containerized deployment with flexible audio handling
+- **📊 Real-time Monitoring** - Live activity tracking and analytics
+- **⚡ Performance Optimized** - Configurable LLM call intervals to reduce computational overhead
 
-    git clone <your-project-repository-url>
-    cd <your-project-directory>
+## 🛠️ Installation
 
-    Run the Setup Command:
-    This command will automatically download the whisper.cpp dependency (as a Git submodule) and compile the necessary C++ libraries.
+### Prerequisites
 
-    make setup
+- **Go 1.21+** (for building from source)
+- **CMake** (for building Whisper.cpp)
+- **PortAudio** (for audio support)
+- **Git** (for cloning the repository)
 
-# Running the Application
+### Build from Source
 
-After the setup is complete, you can start the Focus Helper ATC tower with a simple command.
+```bash
+git clone https://github.com/robertocpaes/focus-helper.git
+cd focus-helper
+make build
+make move
+```
 
-    make run
+### Docker
 
-This will compile and run the main Go program. The application is now active and ready to manage your focus flights!
-Makefile Commands
+```bash
+docker-compose up --build
+```
 
-The project includes a Makefile to simplify common tasks.
+## 🎯 Use Cases
 
-    make setup: Sets up the project for the first time (initializes submodules and builds C++).
+### For Autistic Individuals
+- **Hyperfocus Management**: Get alerts when focus becomes unhealthy
+- **Break Reminders**: Automated reminders to take breaks
+- **Activity Tracking**: Monitor computer usage patterns
+- **Voice Control**: Hands-free interaction with the system
 
-    make build: Compiles the production binary.
+### For Caregivers
+- **Remote Monitoring**: Track focus sessions via MCP API
+- **Alert Management**: Receive notifications about concerning patterns
+- **Session Analytics**: Understand focus patterns over time
+- **Custom Interventions**: Trigger specific alert levels remotely
 
-    make run: Compiles and runs the program.
+### For Developers
+- **MCP Integration**: Build tools that interact with focus sessions
+- **API Access**: Real-time session data and control
+- **Custom Alerts**: Create specialized alert systems
+- **Data Analysis**: Access session data for research
 
-    make build-debug: Creates a binary for debugging with VS Code.
+## 🔧 Configuration
 
-    make clean: Removes the compiled files.
+Focus Helper stores configuration in:
+- **Linux/macOS**: `~/.config/focushelper/`
+- **Windows**: `%APPDATA%\focushelper\`
 
-# Development & Debugging
+Edit `profiles.json` to customize alert levels, voice commands, and other settings.
 
-For development, it is highly recommended to use the native .deb package of Visual Studio Code. The project includes the necessary configuration (.vscode/launch.json and .vscode/tasks.json) to enable one-click debugging (F5), which automatically handles the complex CGo compilation process.
+## 🐳 Docker Support
 
+```bash
+# Basic usage
+docker-compose up
 
-# Contributing & License
+# With custom configuration
+docker-compose -f docker-compose.prod.yml up
+```
 
-This project is currently in development and subject to change. Please file feature requests and bugs in the GitHub issues. The license is Apache 2 so feel free to redistribute. Redistributions in either source code or binary form must reproduce the copyright notice, and please link back to this repository for more information:
+See [Docker Documentation](docs/content/docker/) for detailed setup instructions.
 
+## 🔌 API Integration
 
-    whisper.cpp
-    https://github.com/ggerganov/whisper.cpp
-    Copyright (c) The ggml authors
+Focus Helper includes a comprehensive MCP server for external integration:
 
-    ffmpeg
-    https://ffmpeg.org/
-    Copyright (c) the FFmpeg developers
+```bash
+# Start with MCP server
+focushelper --mcp
 
-This software links to static libraries of whisper.cpp licensed under the MIT License. This software links to static libraries of ffmpeg licensed under the LGPL 2.1 License.
+# Test the API
+curl http://localhost:8089/health
+```
+
+### Example API Usage
+
+```bash
+# Get session information
+curl -X POST http://localhost:8089/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"get_session_info","params":{}}'
+
+# Trigger alert
+curl -X POST http://localhost:8089/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"trigger_alert","params":{"alert_index":0}}'
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Whisper.cpp** for voice recognition
+- **PortAudio** for cross-platform audio support
+- **Hugo** for documentation
+- **The autistic community** for inspiration and feedback
+
+## 📞 Support
+
+- 📖 **Documentation**: [docs/](docs/)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/robertocpaes/focus-helper/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/robertocpaes/focus-helper/discussions)
+- 📧 **Email**: [Contact us](mailto:support@focus-helper.dev)
+
+---
+
+**Ready to get started?** Check out our [Getting Started Guide](docs/content/getting-started/) or explore the [Features](docs/content/features/) section to learn more about what Focus Helper can do for you.

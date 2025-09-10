@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hyperfocus Manager</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div id="root" class="min-h-screen flex items-center justify-center"></div>
+
+  <script type="text/babel">
+    function HyperfocusApp() {
+      const [profile, setProfile] = React.useState({ hyperfocus_associations: {} });
+      const [newApp, setNewApp] = React.useState('');
+      const [newCat, setNewCat] = React.useState('');
+
+      React.useEffect(() => {
+        async function loadProfile() {
+          const res = await fetch("/api/profiles");
+          const data = await res.json();
+          if (data.length > 0) setProfile(data[0]);
+        }
+        loadProfile();
+      }, []);
+
+      const addHyperfocus = () => {
+        if (!newApp || !newCat) return;
+        const updated = { ...profile.hyperfocus_associations };
+        updated[newApp] = newCat;
+        setProfile({ ...profile, hyperfocus_associations: updated });
+        setNewApp('');
+        setNewCat('');
+      };
+
+      const deleteHyperfocus = (app) => {
+        const updated = { ...profile.hyperfocus_associations };
+        delete updated[app];
+        setProfile({ ...profile, hyperfocus_associations: updated });
+      };
+
+      const saveProfile = async () => {
+        await fetch("/api/profiles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify([profile])
+        });
+        alert("Saved!");
+      };
+
+      return (
+        <div className="w-full max-w-3xl bg-white shadow rounded p-6 space-y-4">
+          <h2 className="text-2xl font-bold mb-4">Hyperfocus Associations</h2>
+
+          <ul className="space-y-2">
+            {Object.entries(profile.hyperfocus_associations).map(([app, cat], idx) => (
+              <li key={idx} className="flex justify-between items-center border p-2 rounded bg-gray-50">
+                <span>{app} → {cat}</span>
+                <button
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                  onClick={() => deleteHyperfocus(app)}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+            {Object.keys(profile.hyperfocus_associations).length === 0 && (
+              <li className="text-gray-500 italic">No hyperfocus associations yet.</li>
+            )}
+          </ul>
+
+          <div className="flex gap-2">
+            <input
+              className="border p-2 flex-1 min-w-[120px]"
+              placeholder="App name"
+              value={newApp}
+              onChange={e => setNewApp(e.target.value)}
+            />
+            <input
+              className="border p-2 flex-1 min-w-[120px]"
+              placeholder="Category"
+              value={newCat}
+              onChange={e => setNewCat(e.target.value)}
+            />
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+              onClick={addHyperfocus}
+            >
+              Add
+            </button>
+          </div>
+
+          <button
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded"
+            onClick={saveProfile}
+          >
+            Save Changes
+          </button>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<HyperfocusApp />);
+  </script>
+</body>
+</html>

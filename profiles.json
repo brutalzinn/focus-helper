@@ -1,49 +1,50 @@
 [
     {
-        "name": "default",
-        "time_location": "America/Sao_Paulo",
-        "persona_name": "atc_tower",
-        "language": "pt-br",
-        "username": "Piloto-Alfa-Um",
-        "iamodel": {
-            "type": "ollama",
-            "model": "llama3.1",
-            "url": "http://localhost:11434/api/generate"
-        },
-        "idle_timeout": "3m",
-        "activity_check_rate": "30s",
-        "min_random_question": "45m",
-        "max_random_question": "90m",
-        "reduce_os_sounds": false,
-        "wellbeing_questions_enabled": false,
-        "ia_detector_enabled": true,
-        "hyperfocus_min_duration": "30m",
-        "database_file": "/home/robertocpaes/Projects/Pessoal/focus-helper/focus_helper.db",
-        "log_file": "/home/robertocpaes/Projects/Pessoal/focus-helper/focus_helper.log",
-        "listener_enabled": true,
-        "vad_threshold": 0.02,
-        "vad_silence_timeout": "1500ms",
-        "whisper_model_path": "/home/robertocpaes/Projects/Pessoal/focus-helper/whisper.cpp/models/ggml-base.bin",
+        "name": "${FOCUSHELPER_PROFILE_NAME:default}",
         "hyperfocus_associations": {
-            "PHPStorm": "Programação",
-            "Visual Studio Code": "Programação",
-            "GoLand": "Programação",
-            "IntelliJ IDEA": "Programação",
+            "Docker": "Sistema/DevOps",
             "Figma": "Design",
+            "Firefox": "Navegação/Pesquisa",
+            "GoLand": "Programação",
+            "Google Chrome": "Navegação/Pesquisa",
+            "IntelliJ IDEA": "Programação",
+            "Notepad": "Anotação",
+            "PHPStorm": "Programação",
             "Photoshop": "Design",
             "Terminal": "Sistema/DevOps",
-            "Docker": "Sistema/DevOps",
             "Termius": "Sistema/DevOps",
-            "Notepad": "Anotação",
-            "iTerm": "Sistema/DevOps",
-            "Google Chrome": "Navegação/Pesquisa",
-            "Firefox": "Navegação/Pesquisa"
+            "Visual Studio Code": "Programação",
+            "iTerm": "Sistema/DevOps"
+        },
+        "debug": false,
+        "time_location": "${FOCUSHELPER_TIME_LOCATION:America/Sao_Paulo}",
+        "language": "${FOCUSHELPER_LANGUAGE:pt-br}",
+        "hyperfocus_min_duration": "${FOCUSHELPER_HYPERFOCUS_MIN_DURATION:20m0s}",
+        "username": "${FOCUSHELPER_USERNAME:Piloto-Alfa-Um}",
+        "persona_name": "${FOCUSHELPER_PERSONA_NAME:atc_tower}",
+        "iamodel": {
+            "model": "${FOCUSHELPER_LLM_MODEL:llama3.2}",
+            "type": "${FOCUSHELPER_LLM_TYPE:ollama}",
+            "url": "${FOCUSHELPER_LLM_URL:http://localhost:11434/api/generate}"
+        },
+        "idle_timeout": "${FOCUSHELPER_IDLE_TIMEOUT:3m0s}",
+        "activity_check_rate": "${FOCUSHELPER_ACTIVITY_CHECK_RATE:30s}",
+        "min_random_question": "${FOCUSHELPER_MIN_RANDOM_QUESTION:45m0s}",
+        "max_random_question": "${FOCUSHELPER_MAX_RANDOM_QUESTION:1h30m0s}",
+        "reduce_os_sounds": true,
+        "ia_detector_enabled": "${FOCUSHELPER_IA_DETECTOR_ENABLED:true}",
+        "wellbeing_questions_enabled": "${FOCUSHELPER_WELLBEING_QUESTIONS_ENABLED:false}",
+        "database_file": "${FOCUSHELPER_DATABASE_FILE:./focus_helper.db}",
+        "log_file": "${FOCUSHELPER_LOG_FILE:./focus_helper.log}",
+        "misc": {
+            "WarnedThresholds": null
         },
         "alert_levels": [
             {
                 "enabled": true,
                 "level": "low",
-                "threshold": "1h",
+                "tolerance": 0,
+                "threshold": "${FOCUSHELPER_ALERT_LOW_THRESHOLD:30m0s}",
                 "actions": [
                     {
                         "type": "YOUTUBE_AUDIO",
@@ -60,8 +61,13 @@
             {
                 "enabled": true,
                 "level": "medium",
-                "threshold": "1h30m",
+                "tolerance": 0,
+                "threshold": "${FOCUSHELPER_ALERT_MEDIUM_THRESHOLD:1h30m0s}",
                 "actions": [
+                    {
+                        "type": "WEBHOOK",
+                        "url": "http://localhost:5678/webhook-test/4b89be2a-29bf-4fd8-b716-11171b8c60f0"
+                    },
                     {
                         "type": "YOUTUBE_AUDIO",
                         "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
@@ -77,25 +83,30 @@
                     {
                         "type": "SPEAK_VOICE",
                         "text": "Piloto-Alfa-Um, você está em um longo período de foco. Recomendamos uma pausa para hidratação e alongamento."
+                    },
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=W5Z-d1Zx02o",
+                        "start_at": "0:17",
+                        "end_at": "0:19"
                     }
                 ]
             },
             {
                 "enabled": true,
                 "level": "high",
-                "threshold": "2h30m",
                 "tolerance": 2.5,
+                "threshold": "${FOCUSHELPER_ALERT_HIGH_THRESHOLD:3h0m0s}",
                 "actions": [
+                    {
+                        "type": "YOUTUBE_AUDIO",
+                        "url": "https://www.youtube.com/watch?v=8trgESN1Eks"
+                    },
                     {
                         "type": "YOUTUBE_AUDIO",
                         "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
                         "start_at": "0:04",
                         "end_at": "0:05"
-                    },
-                    {
-                        "type": "POPUP",
-                        "popup_title": "Alerta de Foco Intenso",
-                        "popup_message": "Você está trabalhando continuamente por um longo período. Considere fazer uma pausa mais longa."
                     },
                     {
                         "type": "SPEAK_VOICE",
@@ -112,121 +123,37 @@
             {
                 "enabled": true,
                 "level": "critical",
-                "threshold": "4h",
                 "tolerance": 5.0,
+                "threshold": "${FOCUSHELPER_ALERT_CRITICAL_THRESHOLD:6h0m0s}",
                 "actions": [
                     {
                         "type": "SPEAK_VOICE",
-                        "text": "Mayday, Mayday, Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."
-                    },
-                    {
-                        "type": "YOUTUBE_AUDIO",
-                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
-                        "start_at": "0:04",
-                        "end_at": "0:05"
-                    },
-                    {
-                        "type": "YOUTUBE_AUDIO",
-                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
-                        "start_at": "0:04",
-                        "end_at": "0:05"
-                    },
-                    {
-                        "type": "YOUTUBE_AUDIO",
-                        "url": "https://www.youtube.com/watch?v=-VVML0k5xsk",
-                        "start_at": "0:04",
-                        "end_at": "0:05"
+                        "text": "Declare Mayday. Piloto-Alfa-Um, risco de burnout detectado. Desligue o piloto automático e faça uma pausa obrigatória imediatamente."
                     },
                     {
                         "type": "SPEAK_VOICE",
                         "text": "Repetindo, faça uma pausa obrigatória imediatamente."
+                    },
+                    {
+                        "type": "SOUND",
+                        "volume": 2.0,
+                        "sound_file": "stall.mp3"
                     }
                 ]
             }
-        ]
-    },
-    {
-        "name": "kitt_1",
-        "persona_name": "kitt",
-        "language": "pt-br",
-        "username": "Michael",
-        "time_location": "America/Sao_Paulo",
-        "iamodel": {
-            "type": "ollama",
-            "model": "llama3.2",
-            "url": "http://localhost:11434/api/generate"
-        },
-        "idle_timeout": "3m",
-        "activity_check_rate": "30s",
-        "min_random_question": "45m",
-        "max_random_question": "90m",
-        "reduce_os_sounds": true,
-        "wellbeing_questions_enabled": true,
-        "hyperfocus_associations": {
-            "PHPStorm": "Programação",
-            "Visual Studio Code": "Programação",
-            "GoLand": "Programação",
-            "IntelliJ IDEA": "Programação",
-            "Figma": "Design",
-            "Photoshop": "Design",
-            "Terminal": "Sistema/DevOps",
-            "iTerm": "Sistema/DevOps",
-            "Google Chrome": "Navegação/Pesquisa",
-            "Firefox": "Navegação/Pesquisa"
-        },
-        "alert_levels": [
-            {
-                "enabled": true,
-                "level": "low",
-                "threshold": "45m",
-                "actions": [
-                    {
-                        "type": "SOUND",
-                        "sound_file": "kitt_scanner.mp3"
-                    },
-                    {
-                        "type": "SPEAK_IA",
-                        "llama_prompt": "Michael, sistema KITT ativo. Sugestão: verifique seus sistemas e considere uma breve pausa para concluir nossa missão com segurança."
-                    }
-                ]
-            },
-            {
-                "enabled": true,
-                "level": "medium",
-                "threshold": "90m",
-                "multiplier": 1.5,
-                "actions": [
-                    {
-                        "type": "SOUND",
-                        "sound_file": "kitt_scanner.mp3"
-                    },
-                    {
-                        "type": "SPEAK_IA",
-                        "llama_prompt": "Michael, detectei um longo período de foco. Recomendo hidratação e alongamento. Nível de hyperfoco: %level%."
-                    }
-                ]
-            },
-            {
-                "enabled": true,
-                "level": "high",
-                "threshold": "3h30m",
-                "multiplier": 2.5,
-                "actions": [
-                    {
-                        "type": "SOUND",
-                        "sound_file": "kitt_scanner.mp3"
-                    },
-                    {
-                        "type": "POPUP",
-                        "popup_title": "Alerta KITT: Foco Extremo",
-                        "popup_message": "Operação contínua detectada. Pausa longa recomendada para manutenção do sistema."
-                    },
-                    {
-                        "type": "SPEAK_IA",
-                        "llama_prompt": "Michael, sinais claros de hiperfoco detectados. Pausar é essencial para preservar performance e integridade do sistema."
-                    }
-                ]
-            }
-        ]
+        ],
+        "listener_enabled": "${FOCUSHELPER_LISTENER_ENABLED:true}",
+        "activation_word": "${FOCUSHELPER_ACTIVATION_WORD:torre controle comando}",
+        "stop_word": "${FOCUSHELPER_STOP_WORD:parar para cancela}",
+        "vad_threshold": 0.02,
+        "vad_silence_timeout": "${FOCUSHELPER_VAD_SILENCE_TIMEOUT:1500ms}",
+        "whisper_model_path": "${FOCUSHELPER_WHISPER_MODEL_PATH:./whisper.cpp/models/ggml-base.bin}",
+        "session_timeout": "${FOCUSHELPER_SESSION_TIMEOUT:1h0m0s}",
+        "microphone_device_index": -1,
+        "ask_for_microphone_selection": "${FOCUSHELPER_ASK_FOR_MICROPHONE_SELECTION:true}",
+        "docker_mode": "${FOCUSHELPER_DOCKER_MODE:false}",
+        "mcp_server_enabled": "${FOCUSHELPER_MCP_SERVER_ENABLED:true}",
+        "mcp_server_port": "${FOCUSHELPER_MCP_SERVER_PORT:8089}",
+        "llm_call_interval": "${FOCUSHELPER_LLM_CALL_INTERVAL:5m0s}"
     }
 ]

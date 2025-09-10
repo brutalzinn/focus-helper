@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Focus Helper</title>
+    <link>http://localhost:1313/</link>
+    <description>Recent content on Focus Helper</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 09 Sep 2025 19:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>n8n Integration</title>
+      <link>http://localhost:1313/examples/n8n-integration/</link>
+      <pubDate>Tue, 09 Sep 2025 19:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/examples/n8n-integration/</guid>
+      <description>&lt;h1 id=&#34;n8n-integration-with-focus-helper&#34;&gt;n8n Integration with Focus Helper&lt;/h1&gt;&#xA;&lt;p&gt;This guide shows how to integrate Focus Helper with n8n, a powerful workflow automation tool, to create sophisticated focus management workflows.&lt;/p&gt;&#xA;&lt;h2 id=&#34;overview&#34;&gt;Overview&lt;/h2&gt;&#xA;&lt;p&gt;n8n allows you to create complex workflows that can:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Monitor focus sessions in real-time&lt;/li&gt;&#xA;&lt;li&gt;Send notifications to multiple channels&lt;/li&gt;&#xA;&lt;li&gt;Trigger actions based on focus patterns&lt;/li&gt;&#xA;&lt;li&gt;Integrate with external services&lt;/li&gt;&#xA;&lt;li&gt;Create custom dashboards&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h2 id=&#34;prerequisites&#34;&gt;Prerequisites&lt;/h2&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;n8n installed&lt;/strong&gt; (Docker, npm, or self-hosted)&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Focus Helper running&lt;/strong&gt; with MCP server enabled&lt;/li&gt;&#xA;&lt;li&gt;&lt;strong&gt;Basic n8n knowledge&lt;/strong&gt;&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h2 id=&#34;setup&#34;&gt;Setup&lt;/h2&gt;&#xA;&lt;h3 id=&#34;1-start-focus-helper-with-mcp&#34;&gt;1. Start Focus Helper with MCP&lt;/h3&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;ln&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;cl&#34;&gt;focushelper --mcp --docker&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;2-install-n8n&#34;&gt;2. Install n8n&lt;/h3&gt;&#xA;&lt;h4 id=&#34;using-docker-recommended&#34;&gt;Using Docker (Recommended)&lt;/h4&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;ln&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;cl&#34;&gt;docker run -it --rm --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;using-npm&#34;&gt;Using npm&lt;/h4&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;ln&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;cl&#34;&gt;npm install n8n -g&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;ln&#34;&gt;2&lt;/span&gt;&lt;span class=&#34;cl&#34;&gt;n8n start&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;3-access-n8n&#34;&gt;3. Access n8n&lt;/h3&gt;&#xA;&lt;p&gt;Open your browser and go to &lt;code&gt;http://localhost:5678&lt;/code&gt;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

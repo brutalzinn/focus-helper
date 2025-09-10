@@ -1,0 +1,26 @@
+{
+  "name": "focus-helper-docs",
+  "version": "1.0.0",
+  "description": "Documentation for Focus Helper application",
+  "scripts": {
+    "build": "hugo --minify",
+    "dev": "hugo server --bind 0.0.0.0 --port 1313",
+    "clean": "rm -rf public/",
+    "preview": "hugo server --buildDrafts --buildFuture"
+  },
+  "devDependencies": {
+    "hugo-extended": "^0.121.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robertocpaes/focus-helper.git"
+  },
+  "keywords": [
+    "focus-helper",
+    "hyperfocus",
+    "productivity",
+    "documentation"
+  ],
+  "author": "Roberto Paes",
+  "license": "MIT"
+}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Getting Started - Focus Helper</title>
+<meta name="description" content="Quick start guide for Focus Helper">
+<meta name="generator" content="Hugo 0.150.0">
+<link href="http://localhost:1313//index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="http://localhost:1313/getting-started/">
+<link rel="stylesheet" href="http://localhost:1313/css/theme.min.css">
+<link rel="stylesheet" href="http://localhost:1313/css/chroma.min.css">
+<script defer src="http://localhost:1313//js/fontawesome6/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js" integrity="sha256-H3cjtrm/ztDeuhCN9I4yh4iN2Ybx/y1RM7rMmAesA0k=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js" integrity="sha256-4XodgW4TwIJuDtf+v6vDJ39FVxI0veC/kSCCmnFp7ck=" crossorigin="anonymous"></script>
+<script src="http://localhost:1313/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:url" content="http://localhost:1313/getting-started/">
+  <meta property="og:site_name" content="Focus Helper">
+  <meta property="og:title" content="Getting Started">
+  <meta property="og:description" content="Quick start guide for Focus Helper">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Getting Started">
+  <meta name="twitter:description" content="Quick start guide for Focus Helper">
+
+  <meta itemprop="name" content="Getting Started">
+  <meta itemprop="description" content="Quick start guide for Focus Helper">
+  <meta itemprop="datePublished" content="2025-09-09T19:00:00+00:00">
+  <meta itemprop="dateModified" content="2025-09-09T19:00:00+00:00">
+  <meta itemprop="wordCount" content="622"></head>
+<body>
+
+<div class="container"><header>
+<h1>Focus Helper</h1>
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li class=""><a href="/">Home</a></li>
+<li class=""><a href="/getting-started/">Getting Started</a></li>
+<li class=""><a href="/features/">Features</a></li>
+<li class=""><a href="/configuration/">Configuration</a></li>
+<li class=""><a href="/mcp-integration/">MCP Integration</a></li>
+<li class=""><a href="/docker/">Docker</a></li>
+<li class=""><a href="/api-reference/">API Reference</a></li>
+<li class=""><a href="/examples/">Examples</a></li></ul>
+</nav>
+</div>
+
+<div class="content-container">
+<main><h1>Getting Started</h1><h1 id="getting-started-with-focus-helper">Getting Started with Focus Helper</h1>
+<p>This guide will help you get Focus Helper up and running quickly on your system.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Before installing Focus Helper, ensure you have:</p>
+<ul>
+<li><strong>Go 1.21+</strong> (for building from source)</li>
+<li><strong>CMake</strong> (for building Whisper.cpp)</li>
+<li><strong>PortAudio</strong> (for audio support)</li>
+<li><strong>ALSA/OSS</strong> (Linux audio system)</li>
+<li><strong>Git</strong> (for cloning the repository)</li>
+</ul>
+<h3 id="installing-dependencies">Installing Dependencies</h3>
+<h4 id="ubuntudebian">Ubuntu/Debian</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">sudo apt update
+</span></span><span class="line"><span class="ln">2</span><span class="cl">sudo apt install -y golang-go cmake build-essential portaudio19-dev libasound2-dev
+</span></span></code></pre></div><h4 id="macos">macOS</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Install Homebrew if you haven&#39;t already</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">/bin/bash -c <span class="s2">&#34;</span><span class="k">$(</span>curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh<span class="k">)</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Install dependencies</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">brew install go cmake portaudio
+</span></span></code></pre></div><h4 id="windows">Windows</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Install Chocolatey if you haven&#39;t already</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">Set-ExecutionPolicy Bypass -Scope Process -Force<span class="p">;</span> <span class="o">[</span>System.Net.ServicePointManager<span class="o">]</span>::SecurityProtocol <span class="o">=</span> <span class="o">[</span>System.Net.ServicePointManager<span class="o">]</span>::SecurityProtocol -bor 3072<span class="p">;</span> iex <span class="o">((</span>New-Object System.Net.WebClient<span class="o">)</span>.DownloadString<span class="o">(</span><span class="s1">&#39;https://community.chocolatey.org/install.ps1&#39;</span><span class="o">))</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Install dependencies</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">choco install golang cmake portaudio
+</span></span></code></pre></div><h2 id="installation">Installation</h2>
+<h3 id="option-1-build-from-source-recommended">Option 1: Build from Source (Recommended)</h3>
+<ol>
+<li>
+<p><strong>Clone the repository</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">git clone https://github.com/robertocpaes/focus-helper.git
+</span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="nb">cd</span> focus-helper
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Build the application</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">make build
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Install to system</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">make move
+</span></span></code></pre></div></li>
+</ol>
+<h3 id="option-2-docker-alternative">Option 2: Docker (Alternative)</h3>
+<ol>
+<li>
+<p><strong>Build Docker image</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">docker build -t focus-helper .
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Run with Docker Compose</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">docker-compose up --build
+</span></span></code></pre></div></li>
+</ol>
+<h2 id="first-run">First Run</h2>
+<h3 id="basic-usage">Basic Usage</h3>
+<p>Start Focus Helper with default settings:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">focushelper
+</span></span></code></pre></div><h3 id="with-mcp-server">With MCP Server</h3>
+<p>Enable the MCP server for external integration:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">focushelper --mcp
+</span></span></code></pre></div><h3 id="docker-mode">Docker Mode</h3>
+<p>Run in Docker-compatible mode:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">focushelper --docker
+</span></span></code></pre></div><h3 id="microphone-selection">Microphone Selection</h3>
+<p>Force microphone selection on startup:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">focushelper --select-microphone
+</span></span></code></pre></div><h2 id="initial-configuration">Initial Configuration</h2>
+<h3 id="1-microphone-setup">1. Microphone Setup</h3>
+<p>On first run, Focus Helper will prompt you to select a microphone:</p>
+<pre tabindex="0"><code>🎤 Microphone Selection
+Available input devices:
+[0] HDA Intel PCH: ALC1220 Analog (Input Channels: 2, DefaultSampleRate: 48000)
+[1] USB Audio Device (Input Channels: 1, DefaultSampleRate: 44100)
+Select input device by number: 0
+</code></pre><h3 id="2-voice-commands">2. Voice Commands</h3>
+<p>Focus Helper comes with pre-configured voice commands:</p>
+<ul>
+<li><strong>Activation</strong>: &ldquo;torre controle comando&rdquo; (Portuguese)</li>
+<li><strong>Emergency</strong>: &ldquo;mayday emergencia&rdquo;</li>
+<li><strong>Stop</strong>: &ldquo;parar para cancela&rdquo;</li>
+<li><strong>Status</strong>: &ldquo;tempo horas atividade&rdquo;</li>
+<li><strong>Check</strong>: &ldquo;check checagem status&rdquo;</li>
+</ul>
+<h3 id="3-alert-levels">3. Alert Levels</h3>
+<p>Default alert levels are configured as:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Level</th>
+          <th>Duration</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Low</td>
+          <td>45 minutes</td>
+          <td>Basic break reminder</td>
+      </tr>
+      <tr>
+          <td>Medium</td>
+          <td>90 minutes</td>
+          <td>More urgent reminder</td>
+      </tr>
+      <tr>
+          <td>High</td>
+          <td>3 hours</td>
+          <td>Strong intervention needed</td>
+      </tr>
+      <tr>
+          <td>Critical</td>
+          <td>6 hours</td>
+          <td>Emergency intervention</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="configuration-files">Configuration Files</h2>
+<p>Focus Helper stores configuration in:</p>
+<ul>
+<li><strong>Linux/macOS</strong>: <code>~/.config/focushelper/</code></li>
+<li><strong>Windows</strong>: <code>%APPDATA%\focushelper\</code></li>
+</ul>
+<h3 id="main-configuration">Main Configuration</h3>
+<p>Edit <code>profiles.json</code> to customize:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;default&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">    <span class="nt">&#34;alert_levels&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">      <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">        <span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">        <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;low&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">        <span class="nt">&#34;threshold&#34;</span><span class="p">:</span> <span class="s2">&#34;45m&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">        <span class="nt">&#34;actions&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">          <span class="p">{</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">            <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;sound&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">            <span class="nt">&#34;sound_file&#34;</span><span class="p">:</span> <span class="s2">&#34;alert_level_1.mp3&#34;</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">          <span class="p">}</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">        <span class="p">]</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">    <span class="p">],</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">    <span class="nt">&#34;mcp_server_enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">17</span><span class="cl">    <span class="nt">&#34;mcp_server_port&#34;</span><span class="p">:</span> <span class="mi">8089</span>
+</span></span><span class="line"><span class="ln">18</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">19</span><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="testing-the-installation">Testing the Installation</h2>
+<h3 id="1-check-health-status">1. Check Health Status</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl http://localhost:8088/health
+</span></span></code></pre></div><p>Expected response:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span><span class="nt">&#34;status&#34;</span><span class="p">:</span> <span class="s2">&#34;healthy&#34;</span><span class="p">,</span> <span class="nt">&#34;service&#34;</span><span class="p">:</span> <span class="s2">&#34;focus-helper&#34;</span><span class="p">}</span>
+</span></span></code></pre></div><h3 id="2-test-mcp-server">2. Test MCP Server</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl http://localhost:8089/health
+</span></span></code></pre></div><p>Expected response:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span><span class="nt">&#34;status&#34;</span><span class="p">:</span> <span class="s2">&#34;healthy&#34;</span><span class="p">,</span> <span class="nt">&#34;service&#34;</span><span class="p">:</span> <span class="s2">&#34;focus-helper-mcp&#34;</span><span class="p">}</span>
+</span></span></code></pre></div><h3 id="3-test-voice-commands">3. Test Voice Commands</h3>
+<ol>
+<li>Say the activation phrase: &ldquo;torre controle comando&rdquo;</li>
+<li>Wait for the system to respond</li>
+<li>Try a command like &ldquo;tempo horas atividade&rdquo;</li>
+</ol>
+<h3 id="4-test-alert-triggering">4. Test Alert Triggering</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl -X POST http://localhost:8089/mcp <span class="se">\
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="se"></span>  -H <span class="s2">&#34;Content-Type: application/json&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span>  -d <span class="s1">&#39;{&#34;jsonrpc&#34;:&#34;2.0&#34;,&#34;id&#34;:1,&#34;method&#34;:&#34;trigger_alert&#34;,&#34;params&#34;:{&#34;alert_index&#34;:0}}&#39;</span>
+</span></span></code></pre></div><h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="audio-not-working">Audio Not Working</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Check audio devices</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">arecord -l
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Test microphone</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">arecord -f <span class="nb">cd</span> -d <span class="m">5</span> test.wav
+</span></span><span class="line"><span class="ln">6</span><span class="cl">aplay test.wav
+</span></span></code></pre></div><h4 id="permission-denied">Permission Denied</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Add user to audio group (Linux)</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">sudo usermod -a -G audio <span class="nv">$USER</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="c1"># Log out and back in</span>
+</span></span></code></pre></div><h4 id="port-already-in-use">Port Already in Use</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Check what&#39;s using the port</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">sudo netstat -tulpn <span class="p">|</span> grep :8088
+</span></span><span class="line"><span class="ln">3</span><span class="cl">sudo netstat -tulpn <span class="p">|</span> grep :8089
+</span></span><span class="line"><span class="ln">4</span><span class="cl">
+</span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="c1"># Kill the process</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">sudo <span class="nb">kill</span> -9 &lt;PID&gt;
+</span></span></code></pre></div><h4 id="build-errors">Build Errors</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Clean and rebuild</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">make clean
+</span></span><span class="line"><span class="ln">3</span><span class="cl">make build
+</span></span></code></pre></div><h3 id="getting-help">Getting Help</h3>
+<ul>
+<li>📖 <strong>Documentation</strong>: Check the <a href="/features/">Features</a> and <a href="/configuration/">Configuration</a> sections</li>
+<li>🐛 <strong>Issues</strong>: Report problems on <a href="https://github.com/robertocpaes/focus-helper/issues">GitHub Issues</a></li>
+<li>💬 <strong>Discussions</strong>: Ask questions in <a href="https://github.com/robertocpaes/focus-helper/discussions">GitHub Discussions</a></li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<p>Now that you have Focus Helper installed and running:</p>
+<ol>
+<li><strong>Explore Features</strong>: Learn about <a href="/features/hyperfocus-detection/">hyperfocus detection</a> and <a href="/features/voice-commands/">voice commands</a></li>
+<li><strong>Configure Settings</strong>: Customize <a href="/configuration/alert-levels/">alert levels</a> and <a href="/configuration/voice-commands/">voice commands</a></li>
+<li><strong>Integrate Tools</strong>: Set up <a href="/mcp-integration/">MCP integration</a> with your favorite tools</li>
+<li><strong>Docker Deployment</strong>: Learn about <a href="/docker/">Docker setup</a> for production use</li>
+</ol>
+<hr>
+<p><strong>Ready to dive deeper?</strong> Check out our <a href="/features/">Features</a> section to learn about all the capabilities of Focus Helper!</p>
+<div class="edit-meta">
+Last updated on 9 Sep 2025
+
+
+<br>
+Published on 9 Sep 2025
+<br></div><nav class="pagination"><a class="nav nav-prev" href="http://localhost:1313/" title="Focus Helper"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - Focus Helper</a>
+<a class="nav nav-next" href="http://localhost:1313/features/" title="Features">Next - Features <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>

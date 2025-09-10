@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Docker Support - Focus Helper</title>
+<meta name="description" content="Containerized deployment with Docker">
+<meta name="generator" content="Hugo 0.150.0">
+<link href="http://localhost:1313//index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="http://localhost:1313/docker/">
+<link rel="stylesheet" href="http://localhost:1313/css/theme.min.css">
+<link rel="stylesheet" href="http://localhost:1313/css/chroma.min.css">
+<script defer src="http://localhost:1313//js/fontawesome6/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js" integrity="sha256-H3cjtrm/ztDeuhCN9I4yh4iN2Ybx/y1RM7rMmAesA0k=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js" integrity="sha256-4XodgW4TwIJuDtf+v6vDJ39FVxI0veC/kSCCmnFp7ck=" crossorigin="anonymous"></script>
+<script src="http://localhost:1313/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:url" content="http://localhost:1313/docker/">
+  <meta property="og:site_name" content="Focus Helper">
+  <meta property="og:title" content="Docker Support">
+  <meta property="og:description" content="Containerized deployment with Docker">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Docker Support">
+  <meta name="twitter:description" content="Containerized deployment with Docker">
+
+  <meta itemprop="name" content="Docker Support">
+  <meta itemprop="description" content="Containerized deployment with Docker">
+  <meta itemprop="datePublished" content="2025-09-09T19:00:00+00:00">
+  <meta itemprop="dateModified" content="2025-09-09T19:00:00+00:00">
+  <meta itemprop="wordCount" content="1119"></head>
+<body>
+
+<div class="container"><header>
+<h1>Focus Helper</h1>
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li class=""><a href="/">Home</a></li>
+<li class=""><a href="/getting-started/">Getting Started</a></li>
+<li class=""><a href="/features/">Features</a></li>
+<li class=""><a href="/configuration/">Configuration</a></li>
+<li class=""><a href="/mcp-integration/">MCP Integration</a></li>
+<li class=""><a href="/docker/">Docker</a></li>
+<li class=""><a href="/api-reference/">API Reference</a></li>
+<li class=""><a href="/examples/">Examples</a></li></ul>
+</nav>
+</div>
+
+<div class="content-container">
+<main><h1>Docker Support</h1><h1 id="docker-support">Docker Support</h1>
+<p>Focus Helper provides comprehensive Docker support for easy deployment and cross-platform compatibility.</p>
+<h2 id="overview">Overview</h2>
+<p>Docker support enables:</p>
+<ul>
+<li><strong>Cross-Platform Deployment</strong>: Run on any Docker-supported platform</li>
+<li><strong>Easy Setup</strong>: One-command deployment</li>
+<li><strong>Audio Support</strong>: Full audio device access in containers</li>
+<li><strong>Flexible Configuration</strong>: Environment-based configuration</li>
+<li><strong>Production Ready</strong>: Scalable containerized deployment</li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="using-docker-compose-recommended">Using Docker Compose (Recommended)</h3>
+<ol>
+<li>
+<p><strong>Clone the repository</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">git clone https://github.com/robertocpaes/focus-helper.git
+</span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="nb">cd</span> focus-helper
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Start with Docker Compose</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">docker-compose up --build
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Run in background</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">docker-compose up -d --build
+</span></span></code></pre></div></li>
+</ol>
+<h3 id="using-docker-directly">Using Docker Directly</h3>
+<ol>
+<li>
+<p><strong>Build the image</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">docker build -t focus-helper .
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Run the container</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">docker run -d <span class="se">\
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="se"></span>  --name focus-helper <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span>  --device /dev/snd:/dev/snd <span class="se">\
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="se"></span>  --privileged <span class="se">\
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="se"></span>  --group-add audio <span class="se">\
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="se"></span>  -p 8088:8088 <span class="se">\
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="se"></span>  -p 8089:8089 <span class="se">\
+</span></span></span><span class="line"><span class="ln">8</span><span class="cl"><span class="se"></span>  focus-helper
+</span></span></code></pre></div></li>
+</ol>
+<h2 id="docker-compose-configuration">Docker Compose Configuration</h2>
+<h3 id="basic-configuration">Basic Configuration</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;3.8&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w"></span><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">    </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l">.</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">focus-helper</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8088:8088&#34;</span><span class="w">  </span><span class="c"># Web interface</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8089:8089&#34;</span><span class="w">  </span><span class="c"># MCP server</span><span class="w">
+</span></span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="w">    </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">12</span><span class="cl"><span class="w">      </span>- <span class="l">FOCUSHELPER_DOCKER_MODE=true</span><span class="w">
+</span></span></span><span class="line"><span class="ln">13</span><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">14</span><span class="cl"><span class="w">      </span>- <span class="l">focus-helper-data:/home/focushelper/.config/focushelper</span><span class="w">
+</span></span></span><span class="line"><span class="ln">15</span><span class="cl"><span class="w">    </span><span class="nt">devices</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">16</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;/dev/snd:/dev/snd&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">17</span><span class="cl"><span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="ln">18</span><span class="cl"><span class="w">    </span><span class="nt">cap_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">19</span><span class="cl"><span class="w">      </span>- <span class="l">SYS_PTRACE</span><span class="w">
+</span></span></span><span class="line"><span class="ln">20</span><span class="cl"><span class="w">    </span><span class="nt">security_opt</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">21</span><span class="cl"><span class="w">      </span>- <span class="l">seccomp:unconfined</span><span class="w">
+</span></span></span><span class="line"><span class="ln">22</span><span class="cl"><span class="w">    </span><span class="nt">group_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">23</span><span class="cl"><span class="w">      </span>- <span class="l">audio</span><span class="w">
+</span></span></span><span class="line"><span class="ln">24</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln">25</span><span class="cl"><span class="w"></span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">26</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper-data</span><span class="p">:</span><span class="w">
+</span></span></span></code></pre></div><h3 id="advanced-configuration">Advanced Configuration</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;3.8&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w"></span><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">    </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l">.</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">focus-helper</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8088:8088&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8089:8089&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="w">    </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">12</span><span class="cl"><span class="w">      </span>- <span class="l">FOCUSHELPER_DOCKER_MODE=true</span><span class="w">
+</span></span></span><span class="line"><span class="ln">13</span><span class="cl"><span class="w">      </span>- <span class="l">FOCUSHELPER_MCP_SERVER_ENABLED=true</span><span class="w">
+</span></span></span><span class="line"><span class="ln">14</span><span class="cl"><span class="w">      </span>- <span class="l">FOCUSHELPER_MCP_SERVER_PORT=8089</span><span class="w">
+</span></span></span><span class="line"><span class="ln">15</span><span class="cl"><span class="w">      </span>- <span class="l">FOCUSHELPER_DEBUG=false</span><span class="w">
+</span></span></span><span class="line"><span class="ln">16</span><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">17</span><span class="cl"><span class="w">      </span>- <span class="l">focus-helper-data:/home/focushelper/.config/focushelper</span><span class="w">
+</span></span></span><span class="line"><span class="ln">18</span><span class="cl"><span class="w">      </span>- <span class="l">./custom-profiles.json:/home/focushelper/.config/focushelper/profiles.json:ro</span><span class="w">
+</span></span></span><span class="line"><span class="ln">19</span><span class="cl"><span class="w">    </span><span class="nt">devices</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">20</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;/dev/snd:/dev/snd&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">21</span><span class="cl"><span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="ln">22</span><span class="cl"><span class="w">    </span><span class="nt">cap_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">23</span><span class="cl"><span class="w">      </span>- <span class="l">SYS_PTRACE</span><span class="w">
+</span></span></span><span class="line"><span class="ln">24</span><span class="cl"><span class="w">    </span><span class="nt">security_opt</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">25</span><span class="cl"><span class="w">      </span>- <span class="l">seccomp:unconfined</span><span class="w">
+</span></span></span><span class="line"><span class="ln">26</span><span class="cl"><span class="w">    </span><span class="nt">group_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">27</span><span class="cl"><span class="w">      </span>- <span class="l">audio</span><span class="w">
+</span></span></span><span class="line"><span class="ln">28</span><span class="cl"><span class="w">    </span><span class="nt">deploy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">29</span><span class="cl"><span class="w">      </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">30</span><span class="cl"><span class="w">        </span><span class="nt">limits</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">31</span><span class="cl"><span class="w">          </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">512M</span><span class="w">
+</span></span></span><span class="line"><span class="ln">32</span><span class="cl"><span class="w">        </span><span class="nt">reservations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">33</span><span class="cl"><span class="w">          </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">256M</span><span class="w">
+</span></span></span><span class="line"><span class="ln">34</span><span class="cl"><span class="w">    </span><span class="nt">logging</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">35</span><span class="cl"><span class="w">      </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;json-file&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">36</span><span class="cl"><span class="w">      </span><span class="nt">options</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">37</span><span class="cl"><span class="w">        </span><span class="nt">max-size</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;10m&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">38</span><span class="cl"><span class="w">        </span><span class="nt">max-file</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;3&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">39</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln">40</span><span class="cl"><span class="w"></span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">41</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper-data</span><span class="p">:</span><span class="w">
+</span></span></span></code></pre></div><h2 id="dockerfile">Dockerfile</h2>
+<h3 id="multi-stage-build">Multi-Stage Build</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="c"># Multi-stage build for focus-helper</span><span class="err">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="err"></span><span class="k">FROM</span><span class="w"> </span><span class="s">golang:1.21-alpine</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">builder</span><span class="err">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="err"></span><span class="c"># Install build dependencies</span><span class="err">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="err"></span><span class="k">RUN</span> apk add --no-cache <span class="se">\
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="se"></span>    gcc <span class="se">\
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="se"></span>    g++ <span class="se">\
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="se"></span>    make <span class="se">\
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="se"></span>    cmake <span class="se">\
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="se"></span>    pkgconfig <span class="se">\
+</span></span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="se"></span>    alsa-lib-dev <span class="se">\
+</span></span></span><span class="line"><span class="ln">12</span><span class="cl"><span class="se"></span>    portaudio-dev <span class="se">\
+</span></span></span><span class="line"><span class="ln">13</span><span class="cl"><span class="se"></span>    ffmpeg-dev<span class="err">
+</span></span></span><span class="line"><span class="ln">14</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">15</span><span class="cl"><span class="err"></span><span class="c"># Set working directory</span><span class="err">
+</span></span></span><span class="line"><span class="ln">16</span><span class="cl"><span class="err"></span><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span><span class="err">
+</span></span></span><span class="line"><span class="ln">17</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">18</span><span class="cl"><span class="err"></span><span class="c"># Copy go mod files</span><span class="err">
+</span></span></span><span class="line"><span class="ln">19</span><span class="cl"><span class="err"></span><span class="k">COPY</span> go.mod go.sum ./<span class="err">
+</span></span></span><span class="line"><span class="ln">20</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">21</span><span class="cl"><span class="err"></span><span class="c"># Download dependencies</span><span class="err">
+</span></span></span><span class="line"><span class="ln">22</span><span class="cl"><span class="err"></span><span class="k">RUN</span> go mod download<span class="err">
+</span></span></span><span class="line"><span class="ln">23</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">24</span><span class="cl"><span class="err"></span><span class="c"># Copy source code</span><span class="err">
+</span></span></span><span class="line"><span class="ln">25</span><span class="cl"><span class="err"></span><span class="k">COPY</span> . .<span class="err">
+</span></span></span><span class="line"><span class="ln">26</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">27</span><span class="cl"><span class="err"></span><span class="c"># Build the application</span><span class="err">
+</span></span></span><span class="line"><span class="ln">28</span><span class="cl"><span class="err"></span><span class="k">RUN</span> make build<span class="err">
+</span></span></span><span class="line"><span class="ln">29</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">30</span><span class="cl"><span class="err"></span><span class="c"># Runtime stage</span><span class="err">
+</span></span></span><span class="line"><span class="ln">31</span><span class="cl"><span class="err"></span><span class="k">FROM</span><span class="w"> </span><span class="s">alpine:latest</span><span class="err">
+</span></span></span><span class="line"><span class="ln">32</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">33</span><span class="cl"><span class="err"></span><span class="c"># Install runtime dependencies</span><span class="err">
+</span></span></span><span class="line"><span class="ln">34</span><span class="cl"><span class="err"></span><span class="k">RUN</span> apk add --no-cache <span class="se">\
+</span></span></span><span class="line"><span class="ln">35</span><span class="cl"><span class="se"></span>    alsa-lib <span class="se">\
+</span></span></span><span class="line"><span class="ln">36</span><span class="cl"><span class="se"></span>    portaudio <span class="se">\
+</span></span></span><span class="line"><span class="ln">37</span><span class="cl"><span class="se"></span>    ffmpeg <span class="se">\
+</span></span></span><span class="line"><span class="ln">38</span><span class="cl"><span class="se"></span>    sox <span class="se">\
+</span></span></span><span class="line"><span class="ln">39</span><span class="cl"><span class="se"></span>    pulseaudio-utils<span class="err">
+</span></span></span><span class="line"><span class="ln">40</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">41</span><span class="cl"><span class="err"></span><span class="c"># Create app user</span><span class="err">
+</span></span></span><span class="line"><span class="ln">42</span><span class="cl"><span class="err"></span><span class="k">RUN</span> adduser -D -s /bin/sh focushelper<span class="err">
+</span></span></span><span class="line"><span class="ln">43</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">44</span><span class="cl"><span class="err"></span><span class="c"># Set working directory</span><span class="err">
+</span></span></span><span class="line"><span class="ln">45</span><span class="cl"><span class="err"></span><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span><span class="err">
+</span></span></span><span class="line"><span class="ln">46</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">47</span><span class="cl"><span class="err"></span><span class="c"># Copy built binary</span><span class="err">
+</span></span></span><span class="line"><span class="ln">48</span><span class="cl"><span class="err"></span><span class="k">COPY</span> --from<span class="o">=</span>builder /app/focushelper /usr/local/bin/focushelper<span class="err">
+</span></span></span><span class="line"><span class="ln">49</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">50</span><span class="cl"><span class="err"></span><span class="c"># Copy configuration files</span><span class="err">
+</span></span></span><span class="line"><span class="ln">51</span><span class="cl"><span class="err"></span><span class="k">COPY</span> --from<span class="o">=</span>builder /app/profiles.json /app/profiles.json<span class="err">
+</span></span></span><span class="line"><span class="ln">52</span><span class="cl"><span class="err"></span><span class="k">COPY</span> --from<span class="o">=</span>builder /app/langs /app/langs<span class="err">
+</span></span></span><span class="line"><span class="ln">53</span><span class="cl"><span class="err"></span><span class="k">COPY</span> --from<span class="o">=</span>builder /app/assets /app/assets<span class="err">
+</span></span></span><span class="line"><span class="ln">54</span><span class="cl"><span class="err"></span><span class="k">COPY</span> --from<span class="o">=</span>builder /app/voices /app/voices<span class="err">
+</span></span></span><span class="line"><span class="ln">55</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">56</span><span class="cl"><span class="err"></span><span class="c"># Create config directory</span><span class="err">
+</span></span></span><span class="line"><span class="ln">57</span><span class="cl"><span class="err"></span><span class="k">RUN</span> mkdir -p /home/focushelper/.config/focushelper<span class="err">
+</span></span></span><span class="line"><span class="ln">58</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">59</span><span class="cl"><span class="err"></span><span class="c"># Copy configuration to user directory</span><span class="err">
+</span></span></span><span class="line"><span class="ln">60</span><span class="cl"><span class="err"></span><span class="k">RUN</span> cp -r /app/* /home/focushelper/.config/focushelper/<span class="err">
+</span></span></span><span class="line"><span class="ln">61</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">62</span><span class="cl"><span class="err"></span><span class="c"># Set ownership</span><span class="err">
+</span></span></span><span class="line"><span class="ln">63</span><span class="cl"><span class="err"></span><span class="k">RUN</span> chown -R focushelper:focushelper /home/focushelper<span class="err">
+</span></span></span><span class="line"><span class="ln">64</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">65</span><span class="cl"><span class="err"></span><span class="c"># Switch to app user</span><span class="err">
+</span></span></span><span class="line"><span class="ln">66</span><span class="cl"><span class="err"></span><span class="k">USER</span><span class="w"> </span><span class="s">focushelper</span><span class="err">
+</span></span></span><span class="line"><span class="ln">67</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">68</span><span class="cl"><span class="err"></span><span class="c"># Set environment variables for Docker mode</span><span class="err">
+</span></span></span><span class="line"><span class="ln">69</span><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">FOCUSHELPER_DOCKER_MODE</span><span class="o">=</span><span class="nb">true</span>
+</span></span><span class="line"><span class="ln">70</span><span class="cl">
+</span></span><span class="line"><span class="ln">71</span><span class="cl"><span class="c"># Expose ports</span><span class="err">
+</span></span></span><span class="line"><span class="ln">72</span><span class="cl"><span class="err"></span><span class="k">EXPOSE</span><span class="w"> </span><span class="s">8088</span> <span class="m">8089</span><span class="err">
+</span></span></span><span class="line"><span class="ln">73</span><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="ln">74</span><span class="cl"><span class="err"></span><span class="c"># Run the application in Docker mode</span><span class="err">
+</span></span></span><span class="line"><span class="ln">75</span><span class="cl"><span class="err"></span><span class="k">CMD</span> <span class="p">[</span><span class="s2">&#34;focushelper&#34;</span><span class="p">,</span> <span class="s2">&#34;--docker&#34;</span><span class="p">]</span><span class="err">
+</span></span></span></code></pre></div><h2 id="audio-configuration">Audio Configuration</h2>
+<h3 id="linux-audio-support">Linux Audio Support</h3>
+<p>For Linux systems, ensure proper audio device access:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="c"># ... other configuration</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="nt">devices</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;/dev/snd:/dev/snd&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="w">    </span><span class="nt">group_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">8</span><span class="cl"><span class="w">      </span>- <span class="l">audio</span><span class="w">
+</span></span></span></code></pre></div><h3 id="macos-audio-support">macOS Audio Support</h3>
+<p>For macOS, use PulseAudio:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="c"># ... other configuration</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="l">OTO_DRIVER=pulseaudio</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">      </span>- <span class="l">PULSE_SERVER=${XDG_RUNTIME_DIR}/pulse/native</span><span class="w">
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">8</span><span class="cl"><span class="w">      </span>- <span class="l">${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native</span><span class="w">
+</span></span></span></code></pre></div><h3 id="windows-audio-support">Windows Audio Support</h3>
+<p>For Windows, use DirectSound:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="c"># ... other configuration</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="l">OTO_DRIVER=directsound</span><span class="w">
+</span></span></span></code></pre></div><h2 id="environment-variables">Environment Variables</h2>
+<h3 id="core-configuration">Core Configuration</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Default</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>FOCUSHELPER_DOCKER_MODE</code></td>
+          <td><code>false</code></td>
+          <td>Enable Docker-compatible mode</td>
+      </tr>
+      <tr>
+          <td><code>FOCUSHELPER_MCP_SERVER_ENABLED</code></td>
+          <td><code>true</code></td>
+          <td>Enable MCP server</td>
+      </tr>
+      <tr>
+          <td><code>FOCUSHELPER_MCP_SERVER_PORT</code></td>
+          <td><code>8089</code></td>
+          <td>MCP server port</td>
+      </tr>
+      <tr>
+          <td><code>FOCUSHELPER_DEBUG</code></td>
+          <td><code>false</code></td>
+          <td>Enable debug mode</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="audio-configuration-1">Audio Configuration</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Default</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>OTO_DRIVER</code></td>
+          <td><code>auto</code></td>
+          <td>Audio driver to use</td>
+      </tr>
+      <tr>
+          <td><code>PULSE_SERVER</code></td>
+          <td>-</td>
+          <td>PulseAudio server (macOS)</td>
+      </tr>
+      <tr>
+          <td><code>ALSA_DEVICE</code></td>
+          <td>-</td>
+          <td>ALSA device (Linux)</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="database-configuration">Database Configuration</h3>
+<table>
+  <thead>
+      <tr>
+          <th>Variable</th>
+          <th>Default</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>FOCUSHELPER_DATABASE_FILE</code></td>
+          <td><code>/home/focushelper/.config/focushelper/focus_helper.db</code></td>
+          <td>Database file path</td>
+      </tr>
+      <tr>
+          <td><code>FOCUSHELPER_LOG_FILE</code></td>
+          <td><code>/home/focushelper/.config/focushelper/focus_helper.log</code></td>
+          <td>Log file path</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="volume-management">Volume Management</h2>
+<h3 id="persistent-data">Persistent Data</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper-data</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l">local</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="nt">driver_opts</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">none</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">      </span><span class="nt">o</span><span class="p">:</span><span class="w"> </span><span class="l">bind</span><span class="w">
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="w">      </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="l">/path/to/persistent/data</span><span class="w">
+</span></span></span></code></pre></div><h3 id="configuration-files">Configuration Files</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">      </span>- <span class="l">./profiles.json:/home/focushelper/.config/focushelper/profiles.json:ro</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="l">./custom-langs:/home/focushelper/.config/focushelper/langs:ro</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">      </span>- <span class="l">./custom-assets:/home/focushelper/.config/focushelper/assets:ro</span><span class="w">
+</span></span></span></code></pre></div><h2 id="networking">Networking</h2>
+<h3 id="port-configuration">Port Configuration</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8088:8088&#34;</span><span class="w">  </span><span class="c"># Web interface</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8089:8089&#34;</span><span class="w">  </span><span class="c"># MCP server</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">      </span>- <span class="s2">&#34;8080:8080&#34;</span><span class="w">  </span><span class="c"># Custom port</span><span class="w">
+</span></span></span></code></pre></div><h3 id="network-mode">Network Mode</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="l">host </span><span class="w"> </span><span class="c"># Use host networking</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">    </span><span class="c"># OR</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">    </span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w">      </span>- <span class="l">focus-helper-network</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w"></span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper-network</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l">bridge</span><span class="w">
+</span></span></span></code></pre></div><h2 id="security-considerations">Security Considerations</h2>
+<h3 id="privileged-mode">Privileged Mode</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">  </span><span class="c"># Required for audio device access</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="nt">cap_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="l">SYS_PTRACE</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">    </span><span class="nt">security_opt</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="w">      </span>- <span class="l">seccomp:unconfined</span><span class="w">
+</span></span></span></code></pre></div><h3 id="user-permissions">User Permissions</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;1000:1000&#34;</span><span class="w">  </span><span class="c"># Run as specific user</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="nt">group_add</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span>- <span class="l">audio</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">      </span>- <span class="l">video</span><span class="w">
+</span></span></span></code></pre></div><h2 id="monitoring-and-logging">Monitoring and Logging</h2>
+<h3 id="log-configuration">Log Configuration</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">logging</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">      </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;json-file&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span><span class="nt">options</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">        </span><span class="nt">max-size</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;10m&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="w">        </span><span class="nt">max-file</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;3&#34;</span><span class="w">
+</span></span></span></code></pre></div><h3 id="health-checks">Health Checks</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">healthcheck</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">      </span><span class="nt">test</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&#34;CMD&#34;</span><span class="p">,</span><span class="w"> </span><span class="s2">&#34;curl&#34;</span><span class="p">,</span><span class="w"> </span><span class="s2">&#34;-f&#34;</span><span class="p">,</span><span class="w"> </span><span class="s2">&#34;http://localhost:8088/health&#34;</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l">30s</span><span class="w">
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="w">      </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l">10s</span><span class="w">
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="w">      </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="w">
+</span></span></span><span class="line"><span class="ln">8</span><span class="cl"><span class="w">      </span><span class="nt">start_period</span><span class="p">:</span><span class="w"> </span><span class="l">40s</span><span class="w">
+</span></span></span></code></pre></div><h2 id="production-deployment">Production Deployment</h2>
+<h3 id="resource-limits">Resource Limits</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w">    </span><span class="nt">deploy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">      </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">        </span><span class="nt">limits</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w">          </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">512M</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">          </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;0.5&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w">        </span><span class="nt">reservations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">          </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">256M</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">          </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;0.25&#39;</span><span class="w">
+</span></span></span></code></pre></div><h3 id="restart-policies">Restart Policies</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="w">    </span><span class="c"># OR</span><span class="w">
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="kc">on</span>-<span class="l">failure:3</span><span class="w">
+</span></span></span></code></pre></div><h3 id="scaling">Scaling</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">  </span><span class="nt">focus-helper</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w">    </span><span class="nt">deploy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">      </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">      </span><span class="nt">update_config</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w">        </span><span class="nt">parallelism</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">        </span><span class="nt">delay</span><span class="p">:</span><span class="w"> </span><span class="l">10s</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w">      </span><span class="nt">rollback_config</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">        </span><span class="nt">parallelism</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">        </span><span class="nt">delay</span><span class="p">:</span><span class="w"> </span><span class="l">10s</span><span class="w">
+</span></span></span></code></pre></div><h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="audio-not-working">Audio Not Working</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Check audio devices</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">docker <span class="nb">exec</span> -it focus-helper ls -la /dev/snd/
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Test audio device detection</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">docker <span class="nb">exec</span> -it focus-helper focushelper --docker --select-microphone
+</span></span></code></pre></div><h4 id="permission-denied">Permission Denied</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Check container permissions</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">docker <span class="nb">exec</span> -it focus-helper id
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Check audio group membership</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">docker <span class="nb">exec</span> -it focus-helper groups
+</span></span></code></pre></div><h4 id="port-already-in-use">Port Already in Use</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Check port usage</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">sudo netstat -tulpn <span class="p">|</span> grep :8088
+</span></span><span class="line"><span class="ln">3</span><span class="cl">sudo netstat -tulpn <span class="p">|</span> grep :8089
+</span></span><span class="line"><span class="ln">4</span><span class="cl">
+</span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="c1"># Kill conflicting processes</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl">sudo <span class="nb">kill</span> -9 &lt;PID&gt;
+</span></span></code></pre></div><h3 id="debug-mode">Debug Mode</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># Run with debug logging</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">docker run -it --rm <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span>  --device /dev/snd:/dev/snd <span class="se">\
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="se"></span>  --privileged <span class="se">\
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="se"></span>  --group-add audio <span class="se">\
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="se"></span>  -e <span class="nv">FOCUSHELPER_DEBUG</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="se"></span>  focus-helper focushelper --docker --debug
+</span></span></code></pre></div><h3 id="logs">Logs</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="c1"># View container logs</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">docker logs focus-helper
+</span></span><span class="line"><span class="ln">3</span><span class="cl">
+</span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="c1"># Follow logs in real-time</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl">docker logs -f focus-helper
+</span></span><span class="line"><span class="ln">6</span><span class="cl">
+</span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="c1"># View specific log files</span>
+</span></span><span class="line"><span class="ln">8</span><span class="cl">docker <span class="nb">exec</span> -it focus-helper tail -f /home/focushelper/.config/focushelper/focus_helper.log
+</span></span></code></pre></div><h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use Docker Compose</strong>: Easier management and configuration</li>
+<li><strong>Persistent Volumes</strong>: Store configuration and data persistently</li>
+<li><strong>Resource Limits</strong>: Set appropriate memory and CPU limits</li>
+<li><strong>Health Checks</strong>: Monitor container health</li>
+<li><strong>Logging</strong>: Configure proper log rotation</li>
+<li><strong>Security</strong>: Use least privilege principle</li>
+<li><strong>Updates</strong>: Regular image updates for security</li>
+</ol>
+<hr>
+<p><strong>Ready to deploy?</strong> Check out our <a href="/configuration/">Configuration</a> section for detailed configuration options and <a href="/examples/">Examples</a> for deployment scenarios.</p>
+<div class="edit-meta">
+Last updated on 9 Sep 2025
+
+
+<br>
+Published on 9 Sep 2025
+<br></div><nav class="pagination"><a class="nav nav-prev" href="http://localhost:1313/mcp-integration/" title="MCP Integration"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - MCP Integration</a>
+<a class="nav nav-next" href="http://localhost:1313/examples/" title="Examples">Next - Examples <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><a href="#" id="backtothetop-fixed" class="backtothetop"
+ data-backtothetop-duration="600"
+ data-backtothetop-easing="easeOutQuart"
+ data-backtothetop-fixed-fadeIn="1000"
+ data-backtothetop-fixed-fadeOut="1000"
+ data-backtothetop-fixed-bottom="10"
+ data-backtothetop-fixed-right="20">
+<span class="fa-layers fa-fw">
+<i class="fas fa-circle"></i>
+<i class="fas fa-arrow-circle-up"></i>
+</span></a>
+</div>
+</body>
+</html>
