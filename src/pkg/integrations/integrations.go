@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-func TriggerWebhook(webhookURL string, payload string) error {
+func TriggerWebhook(webhookURL string, payload []byte) error {
 	if webhookURL == "" {
 		log.Println("URL do Home Assistant não configurada. Pulando webhook.")
 		return nil
 	}
-	req, _ := http.NewRequest("POST", webhookURL, bytes.NewBuffer([]byte(payload)))
+	req, _ := http.NewRequest("POST", webhookURL, bytes.NewBuffer(payload))
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)

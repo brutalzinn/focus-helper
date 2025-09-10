@@ -147,7 +147,7 @@
         "stop_word": "${FOCUSHELPER_STOP_WORD:parar para cancela}",
         "vad_threshold": 0.02,
         "vad_silence_timeout": "${FOCUSHELPER_VAD_SILENCE_TIMEOUT:1500ms}",
-        "whisper_model_path": "${FOCUSHELPER_WHISPER_MODEL_PATH:./whisper.cpp/models/ggml-base.bin}",
+        "whisper_model_path": "${FOCUSHELPER_WHISPER_MODEL_PATH:/home/robertocpaes/Projects/Pessoal/focus-helper/whisper.cpp/models/ggml-base.bin}",
         "session_timeout": "${FOCUSHELPER_SESSION_TIMEOUT:1h0m0s}",
         "microphone_device_index": -1,
         "ask_for_microphone_selection": "${FOCUSHELPER_ASK_FOR_MICROPHONE_SELECTION:true}",

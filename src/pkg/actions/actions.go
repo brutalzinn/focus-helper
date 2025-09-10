@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
-	"focus-helper/pkg/integrations"
 	"focus-helper/src/pkg/audio"
 	"focus-helper/src/pkg/common"
 	"focus-helper/src/pkg/config"
+	"focus-helper/src/pkg/integrations"
 	"focus-helper/src/pkg/models"
 	"focus-helper/src/pkg/persona"
 	"focus-helper/src/pkg/state"

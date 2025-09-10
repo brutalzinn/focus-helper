@@ -1,0 +1,51 @@
+{
+  "no_hyperfocus": "Sem sinais de hiperfoco",
+  "months": {
+    "1": "janeiro",
+    "2": "fevereiro",
+    "3": "março",
+    "4": "abril",
+    "5": "maio",
+    "6": "junho",
+    "7": "julho",
+    "8": "agosto",
+    "9": "setembro",
+    "10": "outubro",
+    "11": "novembro",
+    "12": "dezembro"
+  },
+  "date_format": "{day} de {month} de {year}",
+  "time_format": "15:04",
+  "low": "baixo",
+  "medium": "médio",
+  "high": "alto",
+  "critical": "crítico",
+  "time_periods": {
+    "early_morning": "da madrugada",
+    "morning": "da manhã",
+    "noon": "meio-dia",
+    "afternoon": "da tarde",
+    "night": "da noite"
+  },
+  "hour_words": {
+    "1": "uma",
+    "2": "duas",
+    "3": "três",
+    "4": "quatro",
+    "5": "cinco",
+    "6": "seis",
+    "7": "sete",
+    "8": "oito",
+    "9": "nove",
+    "10": "dez",
+    "11": "onze",
+    "12": "doze"
+  },
+  "minute": "minuto",
+  "hour": "hora",
+  "second": "segundo",
+  "debug_on": "modo de teste",
+  "debug_off": "modo de teste inativo",
+  "ask_sheduler":"Olá, %username% lembre de fazer o seu checklist para um vôo mais tranquilo", 
+  "detector_prompt": "Você é um Analista de Hiperfoco. Sua tarefa é analisar a atividade do usuário no computador e determinar o nível de intervenção correto.\nExistem %d níveis de alerta disponíveis, indexados de 0 a %d.\n- O índice 0 é o aviso mais suave.\n- O índice %d é a intervenção de emergência mais crítica.\n\nCom base no histórico do usuário, na aplicação em foco e no tempo de uso contínuo, você deve retornar um único número representando o índice do alerta apropriado. Se nenhum alerta for necessário, retorne -1."
+}
